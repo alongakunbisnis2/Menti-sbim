@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="/sbim-favicon.png"><title>SBIM — Papan Suara Peserta</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#F4EADF;--ink:#3A2C1C;--accent:#C62A2A;--yellow:#E9A73C;--green:#5F7A3F;--card:#FDF8F1;--brown:#5A462E;--blue:#4296C6;--cyan:#96C6D2;--sage:#A2AE7E}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:'Archivo',sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;
+background-image:radial-gradient(rgba(58,44,28,.13) 1px,transparent 1px);background-size:22px 22px;
+mask-image:linear-gradient(#000,transparent 75%)}
+.grain{position:fixed;inset:0;pointer-events:none;opacity:.06;z-index:50;
+background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E")}
+.mono{font-family:'Space Mono',monospace}
+.disp{font-family:'Archivo Black',sans-serif}
+.ticker{background:var(--ink);color:var(--paper);overflow:hidden;white-space:nowrap}
+.ticker>div{display:inline-block;padding:7px 0;animation:tick 26s linear infinite}
+@keyframes tick{to{transform:translateX(-50%)}}
+.rule{border-top:2px solid var(--ink)}
+.card{background:var(--card);border:2px solid var(--ink);border-radius:14px;box-shadow:6px 6px 0 var(--ink)}
+.btn{display:block;text-align:center;font-weight:800;border:2px solid var(--ink);border-radius:12px;padding:14px;box-shadow:4px 4px 0 var(--ink);transition:transform .08s,box-shadow .08s;cursor:pointer;user-select:none}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.btn-red{background:var(--accent);color:#fff}
+.btn-ink{background:var(--ink);color:var(--paper)}
+.field{width:100%;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:13px 15px;font-size:15px;outline:none}
+.field:focus{box-shadow:4px 4px 0 var(--yellow)}
+.code-input{text-align:center;font-family:'Archivo Black';font-size:34px;letter-spacing:.3em;text-transform:uppercase}
+.sticker{display:inline-block;background:var(--yellow);border:2px solid var(--ink);border-radius:10px;padding:4px 12px;box-shadow:3px 3px 0 var(--ink);transform:rotate(-2deg)}
+.stepnum{font-family:'Archivo Black';font-size:44px;line-height:1;color:transparent;-webkit-text-stroke:2px var(--ink)}
+#out:empty{display:none}
+.pop{animation:pop .35s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+a{color:inherit}
+.qr-frame{background:#fff;border:2px solid var(--ink);border-radius:12px;padding:10px;box-shadow:4px 4px 0 var(--ink)}
+@media(max-width:768px){.stepnum{font-size:34px}}
+.sbim-lockup{display:inline-flex;align-items:center;gap:.34em;font-family:'Archivo Black',sans-serif;white-space:nowrap}
+.sbim-wordmark{height:1em;width:auto;display:block;flex:0 0 auto}
+.sbim-chip{display:inline-flex;align-items:center;background:var(--paper);border:2px solid var(--ink);border-radius:9px;padding:3px 7px}
+.sbim-word{color:var(--brown);letter-spacing:0}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="ticker mono text-[12px] font-bold"><div>&nbsp;SBIM CAMP — PAPAN SUARA PESERTA — REALTIME — TANPA LOGIN — TANPA APLIKASI — SBIM CAMP — PAPAN SUARA PESERTA — REALTIME — TANPA LOGIN — TANPA APLIKASI —&nbsp;</div></div>
+
+<div class="max-w-6xl mx-auto px-5 pb-14 relative">
+<!-- masthead -->
+<header class="flex items-end justify-between pt-7 pb-5 rule mt-6">
+<div>
+<div class="mono text-[11px] tracking-[.3em] font-bold">EDISI ACARA — No. 001</div>
+<h1 class="mt-3"><img src="/sbim-wordmark.png" alt="SBIM 2026 — School of Business Innovation and Management" style="width:clamp(210px,32vw,360px);height:auto;display:block"></h1>
+</div>
+<div class="text-right hidden sm:block">
+<div class="mono text-[11px]">STATUS</div>
+<div class="mono text-[13px] font-bold"><span style="color:var(--green)">●</span> MENERIMA SUARA</div>
+<div class="mono text-[11px] mt-1 text-neutral-500">v1.0 — word cloud</div>
+</div>
+</header>
+
+<!-- hero + ticket -->
+<div class="grid md:grid-cols-12 gap-6 mt-8">
+<div class="md:col-span-7">
+<p class="text-lg sm:text-xl leading-snug font-medium max-w-lg">Satu pertanyaan tampil di layar besar. Peserta menjawab dari HP. <span class="px-1 font-bold" style="background:var(--yellow)">Kata yang paling sering disebut tampil paling besar.</span></p>
+<div class="mt-7">
+<div class="mono text-[11px] tracking-[.25em] font-bold mb-3">CARA MAIN — 3 LANGKAH</div>
+<div class="rule py-3 flex gap-4 items-baseline"><span class="stepnum">01</span><div><b>Panitia bikin sesi.</b><br><span class="text-neutral-600 text-[15px]">Dapat kode 6 huruf + QR untuk diproyeksikan.</span></div></div>
+<div class="rule py-3 flex gap-4 items-baseline"><span class="stepnum">02</span><div><b>Peserta scan & jawab.</b><br><span class="text-neutral-600 text-[15px]">Buka link, ketik satu kalimat, kirim. Tanpa install.</span></div></div>
+<div class="rule py-3 flex gap-4 items-baseline border-b-2 border-[var(--ink)]"><span class="stepnum">03</span><div><b>Layar bereaksi langsung.</b><br><span class="text-neutral-600 text-[15px]">Jawaban mirip digabung otomatis oleh mesin.</span></div></div>
+</div>
+</div>
+
+<!-- ticket: buat sesi -->
+<div class="md:col-span-5">
+<div class="card p-6 relative">
+<div class="absolute -top-3 left-5"><span class="sticker mono text-[11px] font-bold">PANITIA</span></div>
+<div class="mono text-[11px] tracking-[.25em] font-bold mt-2">BUAT SESI BARU</div>
+<label class="mono text-[11px] font-bold block mt-4 mb-1.5">PERTANYAAN — 1 BARIS = 1 SOAL</label>
+<textarea id="q" rows="3" placeholder="Tulis soalmu di sini &#10;- satu soal per baris, boleh beberapa &#10;- kosongkan lalu tekan CETAK bila ingin soal bawaan" class="field font-medium" style="resize:vertical"></textarea>
+<button onclick="buat()" id="btnBuat" class="btn btn-red w-full mt-3">CETAK KODE + QR →</button>
+<button onclick="pakaiTemplate()" id="btnTpl" class="btn w-full mt-2 bg-white" style="font-size:14px">★ PAKAI 7 SOAL SBIM CAMP</button>
+<div class="border-t-2 border-dashed border-neutral-300 my-5"></div>
+<div class="mono text-[13px] tracking-[.25em] font-bold">PUNYA KODE? GABUNG</div>
+<div class="flex flex-col sm:flex-row gap-2 mt-3">
+<input id="code" placeholder="------" maxlength="6" class="field code-input flex-1 uppercase" style="font-size:34px;padding:14px;text-align:center;letter-spacing:.35em;font-weight:700">
+<button onclick="join()" class="btn btn-ink px-6 whitespace-nowrap" style="font-size:15px">MASUK →</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- result -->
+<div id="out" class="mt-6"></div>
+
+<footer class="mono text-[11px] text-neutral-500 flex flex-wrap justify-between gap-2 mt-10 rule pt-4">
+<span>SBIM · School of Business Innovation and Management — Fakultas Bisnis &amp; Ekonomika, Universitas Surabaya</span><span style="display:flex;align-items:center;gap:8px">#RAISINGTHEAINNOVATOR <img src="/sbim-tiles.png" alt="SBIM" style="height:26px;width:auto;display:block;border-radius:6px"></span>
+</footer>
+</div>
+
+
+<script>
+let BACKEND = (typeof SURGE_BACKEND !== 'undefined' && SURGE_BACKEND) || location.origin;
+let _bk=null;
+function pickBackend(){
+  if(_bk) return _bk;
+  _bk=(async()=>{
+    const cands=[];
+    const host=location.hostname;
+    // kalau halaman ini dibuka dari server sendiri (localhost / IP LAN), pakai itu lebih dulu
+    const lokal=/^(localhost|127\.|0\.0\.0\.0$|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+    if(lokal) cands.push(location.origin);
+    if(typeof SURGE_BACKEND!=='undefined'&&SURGE_BACKEND) cands.push(SURGE_BACKEND);
+    if(typeof SURGE_BACKENDS!=='undefined'&&Array.isArray(SURGE_BACKENDS)) cands.push(...SURGE_BACKENDS);
+    if(!lokal) cands.push(location.origin);
+    for(const u of cands){
+      if(!u) continue;
+      try{const r=await fetch(u+'/health',{signal:AbortSignal.timeout(3500)});
+        if(r.ok){const j=await r.json(); if(j&&j.ok){BACKEND=u; return u;}}}catch(e){}
+    }
+    return BACKEND;
+  })();
+  return _bk;
+}
+const $ = id => document.getElementById(id);
+function showSession(j){
+ $('out').innerHTML = `<div class="pop card p-6 sm:p-8 text-center">
+ <div class="mono text-[11px] tracking-[.3em] font-bold">KODE SESI</div>
+ <div class="disp my-2" style="font-size:clamp(52px,9vw,88px);letter-spacing:.08em">${j.code}</div>
+ <div class="flex justify-center my-4"><div class="qr-frame"><img src="${j.qr}" class="w-48 h-48 block"></div></div>
+ <div class="mono text-[12px] text-neutral-500 break-all mb-5">${j.joinUrl}</div>
+ <div class="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
+ <a class="btn btn-ink flex-1" href="/presenter/?code=${j.code}">BUKA LAYAR PRESENTER →</a>
+ <a class="btn flex-1 bg-white" href="/room/?code=${j.code}">TES JADI PESERTA</a>
+ </div></div>`;
+ $('out').scrollIntoView({behavior:'smooth'});
+}
+// pesan jujur kalau server tidak terjangkau (tanpa data palsu)
+function showError(msg){
+ $('out').innerHTML = `<div class="pop card p-8 text-center">
+ <div class="disp" style="font-size:clamp(22px,3.4vw,32px)">SERVER TIDAK TERSAMBUNG</div>
+ <div class="text-[15px] mt-3" style="color:var(--brown)">${msg}</div>
+ </div>`;
+ $('out').scrollIntoView({behavior:'smooth'});
+}
+function bacaSoal(){ return $('q').value.split('\n').map(s=>s.trim()).filter(Boolean); }
+async function buat(){
+ await pickBackend();
+ const b=$('btnBuat'),old=b.textContent;b.textContent='MENCETAK…';b.disabled=true;
+ try{
+ const lines=$('q').value.split('\n').map(s=>s.trim()).filter(Boolean);
+ const body = lines.length>1 ? {questions:lines, base:location.origin} : {question:lines[0]||'Apa pendapatmu?', base:location.origin};
+ const r=await fetch(BACKEND+'/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+ if(!r.ok) throw 0;
+ showSession(await r.json());
+ }catch(e){
+ showError('Pastikan server sedang jalan, lalu muat ulang halaman ini.');
+ }
+ b.textContent=old;b.disabled=false;
+}
+async function pakaiTemplate(){
+ await pickBackend();
+ const b=$('btnTpl'),old=b.textContent;b.textContent='MEMUAT…';b.disabled=true;
+ let tplQs=[];
+ try{
+ const t=await(await fetch('/templates/sbim-camp.json?v='+Date.now())).json();
+ tplQs=[...bacaSoal(), ...(t.questions||[]).map(q=>typeof q==='string'?q:(q.text||''))].filter(Boolean);
+ const r=await fetch(BACKEND+'/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({questions:tplQs, base:location.origin})});
+ if(!r.ok) throw 0;
+ showSession(await r.json());
+ }catch(e){
+ showError('Template gagal dimuat. Pastikan server sedang jalan.');
+ }
+ b.textContent=old;b.disabled=false;
+}
+function join(){const c=$('code').value.trim().toUpperCase();if(c.length<4){$('code').focus();return;}location.href='/room/?code='+c;}
+$('code').addEventListener('keydown',e=>{if(e.key==='Enter')join();});
+</script></body></html>

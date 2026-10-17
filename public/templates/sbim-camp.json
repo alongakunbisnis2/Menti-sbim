@@ -1,0 +1,82 @@
+{
+  "title": "SBIM Camp — Sesi Perkenalan",
+  "questions": [
+    {
+      "text": "Bagaimana perasaan kamu hari ini?",
+      "kind": "cloud"
+    },
+    {
+      "text": "Kata apa yang terbenak pertama kali ketika mendengar kata “SBIM”?",
+      "kind": "cloud"
+    },
+    {
+      "text": "Kepanjangan dari SBIM?",
+      "kind": "quiz",
+      "options": [
+        {
+          "text": "School of Business Innovation and Management",
+          "correct": true
+        },
+        {
+          "text": "School of Banking and International Marketing"
+        },
+        {
+          "text": "Surabaya Business Institute of Management"
+        },
+        {
+          "text": "School of Business Informatics and Multimedia"
+        }
+      ],
+      "config": {
+        "timer": 20,
+        "points": 1000
+      }
+    },
+    {
+      "text": "Apa itu SBIM?",
+      "kind": "quiz",
+      "options": [
+        {
+          "text": "Sekolah bisnis di bawah FBE Ubaya",
+          "correct": true
+        },
+        {
+          "text": "Komunitas investor Surabaya"
+        },
+        {
+          "text": "Turnamen futsal mahasiswa"
+        },
+        {
+          "text": "Aplikasi belajar online"
+        }
+      ],
+      "config": {
+        "timer": 20,
+        "points": 1000
+      }
+    },
+    {
+      "text": "Lulus dari SBIM, mau jadi apa?",
+      "kind": "cloud"
+    },
+    {
+      "text": "Seberapa yakin kamu bisa membangun bisnis sendiri?",
+      "kind": "scale",
+      "config": {
+        "max": 5,
+        "low": "Belum yakin",
+        "high": "Sangat yakin"
+      }
+    },
+    {
+      "text": "Urutkan prioritas saat memulai usaha (paling penting di atas)",
+      "kind": "rank",
+      "options": [
+        "Validasi masalah pelanggan",
+        "Menyusun tim",
+        "Mencari modal",
+        "Membangun produk"
+      ]
+    }
+  ]
+}

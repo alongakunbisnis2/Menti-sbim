@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<link rel="icon" href="/sbim-favicon.png"><title>Jawab — SBIM</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#F4EADF;--ink:#3A2C1C;--accent:#C62A2A;--yellow:#E9A73C;--green:#5F7A3F;--card:#FDF8F1;--brown:#5A462E;--blue:#4296C6;--cyan:#96C6D2;--sage:#A2AE7E}
+body{background:var(--paper);color:var(--ink);font-family:'Archivo',sans-serif}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(rgba(58,44,28,.12) 1px,transparent 1px);background-size:22px 22px;mask-image:linear-gradient(#000,transparent 70%)}
+.mono{font-family:'Space Mono',monospace}.disp{font-family:'Archivo Black',sans-serif}
+.card{background:var(--card);border:2px solid var(--ink);border-radius:14px;box-shadow:5px 5px 0 var(--ink)}
+.btn{display:block;text-align:center;font-weight:800;border:2px solid var(--ink);border-radius:12px;padding:15px;box-shadow:4px 4px 0 var(--ink);transition:transform .08s,box-shadow .08s;cursor:pointer;font-size:17px;background:#fff;color:var(--ink)}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.btn-red{background:var(--accent);color:#fff}
+.btn-picked{background:var(--yellow)}
+.btn:disabled{opacity:.55}
+.field{width:100%;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:13px 14px;font-size:16px;outline:none}
+.field:focus{box-shadow:4px 4px 0 var(--yellow)}
+.tag{display:inline-block;border:2px solid var(--ink);border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;background:#fff}
+.tag.hot{background:var(--yellow)}
+.opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:13px 14px;font-weight:700;box-shadow:3px 3px 0 var(--ink);cursor:pointer}
+.opt:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.opt.picked{background:var(--yellow)}
+.opt.right{background:#D9F0E2;border-color:var(--green)}
+.opt.wrong{opacity:.55}
+.oletter{font-family:'Archivo Black';border:2px solid var(--ink);border-radius:8px;min-width:32px;height:32px;display:grid;place-items:center;background:var(--paper);font-size:14px}
+.shake{animation:shake .35s}@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.fin{animation:fin .5s cubic-bezier(.2,1,.3,1) both}@keyframes fin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+ol.top{list-style:none;margin:0;padding:0}
+ol.top li{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-top:1.5px solid rgba(58,44,28,.15)}
+ol.top li:first-child{border-top:none}
+.rank{font-family:'Archivo Black';font-size:15px;min-width:30px;color:transparent;-webkit-text-stroke:1.4px var(--ink)}
+li:first-child .rank{color:var(--accent);-webkit-text-stroke:0}
+.upbtn{border:2px solid var(--ink);border-radius:8px;background:#fff;font-weight:800;padding:2px 10px;font-size:13px}
+.upbtn.on{background:var(--yellow)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.sbim-lockup{display:inline-flex;align-items:center;gap:.34em;font-family:'Archivo Black',sans-serif;white-space:nowrap}
+.gate{position:fixed;inset:0;z-index:60;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:20px}
+.gate-in{width:100%;max-width:380px}
+.sbim-wordmark{height:1em;width:auto;display:block;flex:0 0 auto}
+.sbim-chip{display:inline-flex;align-items:center;background:var(--paper);border:2px solid var(--ink);border-radius:9px;padding:3px 7px}
+.sbim-word{color:var(--brown);letter-spacing:0}
+</style>
+</head>
+<body class="min-h-screen">
+<div id="gate" class="gate fin">
+<div class="gate-in">
+<div class="card p-6" style="border-width:3px">
+<img src="/sbim-wordmark.png" alt="SBIM 2026" style="height:30px;width:auto;display:block">
+<h1 class="disp mt-3" style="font-size:31px;line-height:1.05">Gabung sesi</h1>
+<div class="mono text-[11px] tracking-[.2em] font-bold text-neutral-500 mt-2">KODE SESI <span id="gateCode" class="text-neutral-900">—</span></div>
+<label class="mono text-[11px] tracking-[.2em] font-bold block mt-5">NAMA KAMU</label>
+<input id="gateName" maxlength="24" placeholder="cth: Budi" class="field mt-1.5 font-bold" style="font-size:20px">
+<button id="gateBtn" class="btn w-full mt-4" style="font-size:17px" onclick="joinNow()">GABUNG →</button>
+<div id="gateMsg" class="mono text-[12px] font-bold mt-3 text-center" style="min-height:18px"></div>
+</div>
+<p class="mono text-[11px] text-center mt-4 text-neutral-500">Namamu tampil di papan presenter</p>
+</div>
+</div>
+
+<div class="max-w-md mx-auto px-4 py-6 relative">
+<div class="flex items-center justify-between fin">
+<a href="/" aria-label="SBIM"><img src="/sbim-wordmark.png" alt="SBIM 2026" style="height:20px;width:auto;display:block"></a>
+<span id="conn" class="mono text-[11px] font-bold">···</span>
+</div>
+
+<div class="card p-5 mt-5 fin" style="animation-delay:.05s">
+<div class="flex items-center gap-2">
+<span id="codeBadge" class="mono text-[11px] tracking-[.2em] font-bold text-neutral-500">SESI —</span>
+<span id="kindBadge" class="tag hot mono" style="font-size:10px">···</span>
+</div>
+<h1 id="qq" class="disp leading-tight mt-2" style="font-size:25px">Memuat pertanyaan…</h1>
+<div id="timer" class="mono text-[13px] font-bold mt-1" style="display:none"></div>
+<div class="flex items-center gap-2 mt-3">
+<span id="lockBadge" class="tag">···</span>
+<span id="count" class="mono text-[12px] font-bold"></span>
+</div>
+</div>
+
+<div class="card p-5 mt-4 fin" style="animation-delay:.12s">
+<label class="mono text-[11px] tracking-[.2em] font-bold">NAMA PANGGILAN <span class="text-neutral-400">(untuk kuis & papan skor)</span></label>
+<input id="nm" maxlength="24" placeholder="cth: Budi" class="field mt-1.5 font-bold">
+<div id="ans" class="mt-3"></div>
+<div id="msg"></div>
+</div>
+
+<div class="card p-5 mt-4 fin" style="animation-delay:.18s">
+<div class="mono text-[11px] tracking-[.2em] font-bold mb-1">HASIL SEMENTARA</div>
+<div id="top"></div>
+</div>
+<p class="mono text-center text-[11px] text-neutral-400 mt-6">sopan ya — 1 suara / 3 detik</p>
+</div>
+
+
+<script>
+let BACKEND = (typeof SURGE_BACKEND !== 'undefined' && SURGE_BACKEND) || location.origin;
+let _bk=null;
+function pickBackend(){
+  if(_bk) return _bk;
+  _bk=(async()=>{
+    const cands=[];
+    const host=location.hostname;
+    const lokal=/^(localhost|127\.|0\.0\.0\.0$|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+    if(lokal) cands.push(location.origin);
+    if(typeof SURGE_BACKEND!=='undefined'&&SURGE_BACKEND) cands.push(SURGE_BACKEND);
+    if(typeof SURGE_BACKENDS!=='undefined'&&Array.isArray(SURGE_BACKENDS)) cands.push(...SURGE_BACKENDS);
+    if(!lokal) cands.push(location.origin);
+    for(const u of cands){
+      if(!u) continue;
+      try{const r=await fetch(u+'/health',{signal:AbortSignal.timeout(3500)});
+        if(r.ok){const j=await r.json(); if(j&&j.ok){BACKEND=u; return u;}}}catch(e){}
+    }
+    return BACKEND;
+  })();
+  return _bk;
+}
+const code = new URLSearchParams(location.search).get('code')?.toUpperCase() || '';
+const $ = id => document.getElementById(id);
+let socket = null, D = null, timerInt = null;
+let pid = localStorage.getItem('sbim_pid');
+if (!pid) { pid = 'p' + Math.random().toString(36).slice(2, 10); localStorage.setItem('sbim_pid', pid); }
+$('nm').value = localStorage.getItem('sbim_name') || '';
+$('nm').addEventListener('change', e => { const v = e.target.value.trim(); if (v) localStorage.setItem('sbim_name', v); });
+const myName = () => ($('nm').value.trim() || localStorage.getItem('sbim_name') || 'Anonim');
+let joined = !!localStorage.getItem('sbim_name');
+
+function joinNow() {
+  const v = ($('gateName').value || '').trim();
+  if (v.length < 2) { $('gateMsg').textContent = 'Minimal 2 huruf ya.'; return; }
+  localStorage.setItem('sbim_name', v);
+  $('nm').value = v; joined = true;
+  $('gateMsg').textContent = '';
+  $('gate').style.display = 'none';
+  connectSocket();
+}
+function showGate(codeStr) {
+  $('gateCode').textContent = codeStr || '—';
+  $('gateName').value = localStorage.getItem('sbim_name') || '';
+  $('gate').style.display = 'flex';
+  if (joined) { $('gate').style.display = 'none'; } else setTimeout(() => $('gateName').focus(), 120);
+  $('gateName').addEventListener('keydown', e => { if (e.key === 'Enter') joinNow(); });
+}
+let socketStarted = false;
+function connectSocket() {
+  if (socketStarted || !code) return;
+  socketStarted = true;
+  socket = io(BACKEND);
+  socket.on('connect', () => socket.emit('join-room', { code, name: myName() }));
+  socket.on('room:update', dd => setMeta(dd, true));
+  socket.on('vote:scored', sc => showMsg(`Jawaban direkam — skor +${sc.score}.`, true));
+  socket.on('answer:error', e => showMsg(e, false));
+}
+const KIND_ID = { cloud: 'JAWABAN SINGKAT', choice: 'PILIHAN GANDA', quiz: 'KUIS', qa: 'TANYA JAWAB', hundred: '100 POIN', scale: 'SKALA', rank: 'URUTKAN', guess: 'TEBAK ANGKA' };
+
+function showMsg(t, ok) {
+  $('msg').innerHTML = `<div class="fin mt-3 p-3 text-sm font-bold text-center" style="border:2px solid var(--ink);border-radius:10px;background:${ok ? 'var(--yellow)' : '#fff'}">${t}</div>`;
+  if (ok) setTimeout(() => { $('msg').innerHTML = ''; }, 3500);
+}
+async function post(path, body) {
+  const r = await fetch(BACKEND + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pid, name: myName(), ...body }) });
+  return r.json();
+}
+async function send(fn, body, okMsg) {
+  try {
+    if (socket && socket.connected && fn) { socket.emit(fn, { code, pid, name: myName(), ...body }); showMsg(okMsg || 'Terkirim.', true); }
+    else {
+      const map = { 'participant:answer': 'answers', 'participant:vote': 'vote', 'participant:upvote': 'upvote', 'participant:hundred': 'hundred' };
+      const d = await post(`/api/rooms/${code}/${map[fn]}`, body);
+      if (d.error) return showMsg(d.error, false);
+      if (d.myScore !== undefined) showMsg(`Terkirim — skor +${d.myScore}.`, true);
+      else showMsg(okMsg || 'Terkirim.', true);
+      if (d.code) setMeta(d, true);
+    }
+  } catch (e) { showMsg('Gagal mengirim — cek koneksi.', false); }
+}
+
+// ---------- answer UIs ----------
+function uiCloud() {
+  $('ans').innerHTML = `<textarea id="a" rows="3" maxlength="140" placeholder="Ketik jawabanmu…" class="field font-medium"></textarea>
+  <div class="flex justify-between mono text-[11px] text-neutral-500 mt-1"><span>maks 140 karakter</span><span id="ch">0/140</span></div>
+  <button onclick="kirimText()" class="btn btn-red w-full mt-2">KIRIM SUARA →</button>`;
+  $('a').addEventListener('input', e => $('ch').textContent = e.target.value.length + '/140');
+}
+function kirimText() {
+  const v = $('a').value.trim();
+  if (!v) { $('a').classList.add('shake'); setTimeout(() => $('a').classList.remove('shake'), 400); return; }
+  send('participant:answer', { text: v }, 'Terkirim — tampil di layar.');
+  $('a').value = '';
+}
+function uiChoice(quiz) {
+  const voted = myVote();
+  $('ans').innerHTML = D.options.map(o =>
+    `<button class="opt mt-2 ${voted === o.id ? 'picked' : ''} ${D.reveal && o.correct ? 'right' : ''} ${D.reveal && voted && voted !== o.id && !o.correct ? 'wrong' : ''}" onclick="vote('${o.id}')">
+    <span class="oletter">${o.id}</span><span class="flex-1">${o.text}</span>${D.reveal && o.correct ? '<span>✓</span>' : ''}</button>`).join('')
+    + (quiz ? `<div class="mono text-[11px] text-neutral-500 mt-2">Benar = +${D.config.points || 1000} poin + bonus kecepatan. 1 suara per orang (bisa ganti).</div>` : '');
+}
+function myVote() {
+  // votes are anonymous in state; track own via localStorage
+  try { return JSON.parse(localStorage.getItem('sbim_votes') || '{}')[code + ':' + (D ? D.qIndex : 0)]; } catch (e) { return null; }
+}
+function markVote(optId) {
+  try {
+    const k = 'sbim_votes', o = JSON.parse(localStorage.getItem(k) || '{}');
+    o[code + ':' + D.qIndex] = optId; localStorage.setItem(k, JSON.stringify(o));
+  } catch (e) {}
+}
+function vote(optId) { markVote(optId); send('participant:vote', { optionId: optId }, 'Suara direkam.'); renderAll(); }
+function uiQa() {
+  $('ans').innerHTML = `<textarea id="a" rows="2" maxlength="140" placeholder="Tulis pertanyaanmu…" class="field font-medium"></textarea>
+  <button onclick="kirimText()" class="btn btn-red w-full mt-2">KIRIM PERTANYAAN →</button>
+  <div class="mono text-[11px] tracking-[.2em] font-bold mt-4 mb-1">DAFTAR PERTANYAAN — KETUK ▲ UNTUK DUKUNG</div>
+  <div id="qlist"></div>`;
+  renderQaList();
+}
+function renderQaList() {
+  const el = $('qlist');
+  if (!el || !D || D.kind !== 'qa') return;
+  const items = (D.result.items || []).slice(0, 20);
+  el.innerHTML = items.length ? items.map(it =>
+    `<div class="flex items-center gap-2 py-2" style="border-top:1.5px solid rgba(58,44,28,.15)">
+    <button class="upbtn ${it.voters.includes(pid) ? 'on' : ''}" onclick="upvote('${it.id}')">▲ ${it.votes}</button>
+    <span class="font-medium text-[15px] flex-1">${it.text}</span></div>`).join('')
+    : '<div class="text-neutral-400 text-sm py-2">Belum ada pertanyaan.</div>';
+}
+function upvote(id) { send('participant:upvote', { itemId: id }, null); }
+function uiHundred() {
+  $('ans').innerHTML = D.options.map(o =>
+    `<div class="mt-3"><div class="flex justify-between font-bold text-[15px]"><span>${o.id}. ${o.text}</span><span class="mono" id="hv_${o.id}">0</span></div>
+    <input type="range" min="0" max="100" step="5" value="0" id="hr_${o.id}" oninput="hUpd()"></div>`).join('')
+    + `<div class="flex justify-between mono text-[12px] font-bold mt-3"><span>TOTAL <span id="htot">0</span>/100</span></div>
+  <button onclick="hSend()" class="btn btn-red w-full mt-2">KIRIM 100 POIN →</button>`;
+}
+function hUpd() {
+  let s = 0;
+  D.options.forEach(o => { const v = Number($('hr_' + o.id).value); $('hv_' + o.id).textContent = v; s += v; });
+  $('htot').textContent = s;
+  $('htot').style.color = s === 100 ? 'var(--green)' : 'var(--accent)';
+}
+function hSend() {
+  const alloc = {};
+  D.options.forEach(o => alloc[o.id] = Number($('hr_' + o.id).value));
+  const s = Object.values(alloc).reduce((a, b) => a + b, 0);
+  if (s !== 100) return showMsg(`Total harus pas 100 (sekarang ${s}).`, false);
+  send('participant:hundred', { alloc }, 'Alokasi terkirim.');
+}
+
+// ---------- results mini panel ----------
+function renderTop() {
+  const el = $('top');
+  if (!D) return;
+  if (!D.showResults && D.kind !== 'qa') {
+    el.innerHTML = '<div class="text-neutral-400 text-sm">Hasil ditampilkan di layar presenter. Jawabanmu sudah masuk \u2713</div>';
+    return;
+  }
+  if (D.kind === 'scale') {
+    const r = D.result || {};
+    el.innerHTML = `<div class="mono text-[12px] font-bold">RATA-RATA <span style="font-size:20px">${r.avg ?? 0}</span> · ${r.total || 0} jawaban</div>`;
+    return;
+  }
+  if (D.kind === 'rank') {
+    const rows = (D.result.rows || []).slice(0, 4);
+    el.innerHTML = rows.map((x, i) => `<div class="flex justify-between text-[13px] font-bold ${i ? 'mt-1' : ''}"><span>${i + 1}. ${x.text}</span><span class="mono text-neutral-500">rata2 #${x.avgPos}</span></div>`).join('');
+    return;
+  }
+  if (D.kind === 'guess') {
+    const r = D.result || {};
+    el.innerHTML = `<div class="mono text-[12px] font-bold">${r.revealed ? 'JAWABAN: ' + r.answer : 'JAWABAN DISEMBUNYIKAN'} · rata-rata tebakan ${r.avg ?? 0}</div>`;
+    return;
+  }
+  if (D.kind === 'cloud') {
+    const c = (D.result.clusters || []).slice(0, 6);
+    el.innerHTML = c.length ? `<ol class="top">${c.map((x, i) => `<li><span class="rank">${String(i + 1).padStart(2, '0')}</span><span class="font-bold flex-1">${x.text}</span><span class="mono text-[12px] font-bold">×${x.count}</span></li>`).join('')}</ol>` : '<div class="text-neutral-400 text-sm">Jadilah yang pertama menjawab.</div>';
+  } else if (D.kind === 'choice' || D.kind === 'quiz') {
+    const t = D.result.tally || [], tot = D.result.total || 0;
+    el.innerHTML = (tot ? '' : '<div class="text-neutral-400 text-sm mb-1">Belum ada suara.</div>') + t.map(o =>
+      `<div class="flex items-center gap-2 py-1"><span class="oletter" style="min-width:28px;height:28px;font-size:12px">${o.id}</span>
+      <div class="flex-1" style="height:20px;background:rgba(23,19,12,.08);border-radius:6px;overflow:hidden"><div style="height:100%;width:${o.pct}%;background:${D.reveal && o.correct ? 'var(--green)' : 'var(--ink)'};transition:width .5s"></div></div>
+      <span class="mono text-[12px] font-bold">${o.pct}%</span></div>`).join('')
+      + (D.kind === 'quiz' && D.board && D.board.length ? `<div class="mono text-[11px] tracking-[.2em] font-bold mt-3">PAPAN SKOR</div><ol class="top">${D.board.slice(0, 5).map((b, i) => `<li><span class="rank">${String(i + 1).padStart(2, '0')}</span><span class="font-bold flex-1">${b.name}</span><span class="mono text-[12px] font-bold">${b.score}</span></li>`).join('')}</ol>` : '');
+  } else if (D.kind === 'qa') {
+    renderQaList();
+    const items = (D.result.items || []).slice(0, 5);
+    el.innerHTML = items.length ? `<ol class="top">${items.map((x, i) => `<li><span class="rank">${String(i + 1).padStart(2, '0')}</span><span class="font-bold flex-1">${x.text}</span><span class="mono text-[12px] font-bold">▲${x.votes}</span></li>`).join('')}</ol>` : '<div class="text-neutral-400 text-sm">Belum ada pertanyaan.</div>';
+  } else if (D.kind === 'hundred') {
+    const a = D.result.avg || [], tot = D.result.total || 0;
+    el.innerHTML = (tot ? '' : '<div class="text-neutral-400 text-sm mb-1">Belum ada yang membagi poin.</div>') + a.map(o =>
+      `<div class="flex items-center gap-2 py-1"><span class="font-bold text-[14px]" style="min-width:90px">${o.text}</span>
+      <div class="flex-1" style="height:20px;background:rgba(23,19,12,.08);border-radius:6px;overflow:hidden"><div style="height:100%;width:${o.avg}%;background:var(--accent);transition:width .5s"></div></div>
+      <span class="mono text-[12px] font-bold">${o.avg}</span></div>`).join('');
+  }
+}
+
+// ---------- meta + timer ----------
+function setMeta(d, live) {
+  D = d;
+  clearInterval(timerInt);
+  $('conn').innerHTML = live ? '<span style="color:var(--green)">●</span> LIVE' : '<span style="color:var(--accent)">●</span> TERPUTUS';
+  $('codeBadge').textContent = 'SESI ' + (code || '—') + ' • SOAL ' + ((d.qIndex || 0) + 1) + '/' + (d.qTotal || 1);
+  $('kindBadge').textContent = KIND_ID[d.kind] || d.kind;
+  $('qq').textContent = d.question;
+  $('count').textContent = (d.result.total || 0) + (d.kind === 'hundred' ? ' penjawab' : d.kind === 'qa' ? ' pertanyaan' : ' suara');
+  $('lockBadge').textContent = d.locked ? 'SESI DIKUNCI' : 'SESI TERBUKA';
+  $('lockBadge').className = 'tag' + (d.locked ? '' : ' hot');
+  // timer kuis
+  const t = $('timer');
+  if ((d.kind === 'quiz') && d.config && d.config.timer > 0) {
+    t.style.display = 'block';
+    const tick = () => {
+      const left = Math.max(0, Math.ceil(d.config.timer - (Date.now() - d.openedAt) / 1000));
+      t.textContent = left > 0 ? `⏱ ${left} detik tersisa` : 'Waktu habis — presenter akan reveal';
+      t.style.color = left > 0 ? 'var(--accent)' : '#999';
+      if (left <= 0) clearInterval(timerInt);
+    };
+    tick(); timerInt = setInterval(tick, 500);
+  } else t.style.display = 'none';
+  // answer UI (rebuild only when question/type changes)
+  const key = d.qIndex + ':' + d.kind;
+  if ($('ans').dataset.key !== key) { $('ans').dataset.key = key; renderAnswer(); }
+  if (d.kind === 'qa') renderQaList();
+  renderTop();
+}
+function renderAnswer() {
+  if (!D) return;
+  if (D.kind === 'cloud' || D.kind === 'qa') D.kind === 'qa' ? uiQa() : uiCloud();
+  else if (D.kind === 'choice' || D.kind === 'quiz') uiChoice(D.kind === 'quiz');
+  else if (D.kind === 'hundred') uiHundred();
+  else if (D.kind === 'scale') uiScale();
+  else if (D.kind === 'rank') uiRank();
+  else if (D.kind === 'guess') uiGuess();
+}
+function uiScale() {
+  const c = D.config || {}, max = c.max || 5;
+  let btns = '';
+  for (let i = 1; i <= max; i++) btns += `<button id="sv_${i}" onclick="sPick(${i})" class="btn" style="flex:1;min-width:38px;font-size:19px">${i}</button>`;
+  $('ans').innerHTML = `
+  <div class="flex gap-1.5 mt-1">${btns}</div>
+  <div class="flex justify-between mono text-[11px] font-bold mt-2 text-neutral-500"><span>${c.low || '1'}</span><span>${c.high || max}</span></div>
+  <button onclick="sSend()" class="btn btn-red w-full mt-3">KIRIM NILAI →</button>`;
+}
+function sPick(v) {
+  window._sv = v;
+  [...$('ans').querySelectorAll('button')].forEach(b => b.style.background = '');
+  const b = $('sv_' + v); if (b) b.style.background = 'var(--yellow)';
+}
+function sSend() {
+  if (!window._sv) return showMsg('Pilih dulu nilainya.', false);
+  send('participant:scale', { value: window._sv }, `Terkirim: ${window._sv}.`);
+}
+function uiRank() {
+  window._ord = [];
+  $('ans').innerHTML = D.options.map(o =>
+    `<button id="rk_${o.id}" onclick="rTap('${o.id}')" class="btn w-full mt-2 text-left" style="justify-content:flex-start">
+     <span class="mono" id="rn_${o.id}" style="min-width:22px;display:inline-block">–</span> <span class="font-bold">${o.text}</span></button>`).join('')
+    + `<div class="flex justify-between mono text-[11px] font-bold mt-3 text-neutral-500"><span>Tap urut dari paling penting</span><span><span id="rdone">0</span>/${D.options.length}</span></div>
+  <button onclick="rSend()" class="btn btn-red w-full mt-2">KIRIM URUTAN →</button>`;
+}
+function rTap(id) {
+  const i = window._ord.indexOf(id);
+  if (i >= 0) window._ord.splice(i, 1); else window._ord.push(id);
+  D.options.forEach(o => { const el = $('rn_' + o.id); const p = window._ord.indexOf(o.id);
+    el.textContent = p >= 0 ? (p + 1) : '–';
+    const b = $('rk_' + o.id); b.style.background = p >= 0 ? 'var(--yellow)' : ''; });
+  $('rdone').textContent = window._ord.length;
+}
+function rSend() {
+  if (window._ord.length !== D.options.length) return showMsg('Urutkan semua opsi dulu.', false);
+  send('participant:rank', { order: window._ord }, 'Urutan terkirim.');
+}
+function uiGuess() {
+  $('ans').innerHTML = `
+  <input id="gval" inputmode="decimal" placeholder="Tulis angkamu…" class="field mt-1 font-bold" style="font-size:24px">
+  <button onclick="gSend()" class="btn btn-red w-full mt-3">KIRIM TEBAKAN →</button>
+  <div class="mono text-[11px] text-neutral-500 mt-2">Poin makin besar kalau tebakanmu makin dekat.</div>`;
+}
+function gSend() {
+  const v = $('gval').value.trim();
+  if (!v) return showMsg('Isi angkanya dulu.', false);
+  send('participant:guess', { value: v }, 'Tebakan terkirim.');
+}
+function renderAll() { if (D) { renderAnswer(); renderTop(); if (D.kind === 'qa') renderQaList(); } }
+
+// ---------- init ----------
+async function init() {
+  await pickBackend();
+  if (!code) { $('gate').style.display = 'none'; $('qq').textContent = 'Kode tidak ada. Kembali dan isi kode sesi.'; return; }
+  showGate(code);
+  try {
+    const r = await fetch(BACKEND + '/api/rooms/' + code, { signal: AbortSignal.timeout(7000) });
+    if (!r.ok) throw 0;
+    const d = await r.json();
+    setMeta(d, true);
+    showGate(code);
+    connectSocket();
+  } catch (e) {
+    $('gate').style.display = 'none';
+    $('qq').textContent = 'Server tidak tersambung. Periksa jaringan ke server, lalu muat ulang halaman ini.';
+  }
+}
+init();
+</script></body></html>

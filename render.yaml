@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: menti-sbim
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /health
+    # Jangan set PORT / PUBLIC_URL: host menyuntik PORT sendiri, dan tanpa
+    # PUBLIC_URL joinUrl otomatis memakai domain host (dari header Host).
+    autoDeploy: true
