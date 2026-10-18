@@ -60,5 +60,5 @@ cp -R "$BUILD/." "$WT/"
 (cd "$WT" && git add -A \
   && git -c user.name="SBIM Camp" -c user.email="sbimcamp@local" commit -q -m "pages: backend ${U} @ $(date -u +%Y-%m-%dT%H:%M:%SZ)" 2>/dev/null; \
   git push -q "$REMOTE" "$BRANCH" 2>/tmp/pages-push.err) \
-  && log "deploy OK -> https://alongakunbisnis2.github.io$BASE/ (backend $U)" \
+  && log "deploy OK -> https://alongakunbisnis2.github.io$BASE/ (backend utama $(cat /tmp/url_workers 2>/dev/null || echo "$U"))" \
   || log "deploy GAGAL: $(tail -c 200 /tmp/pages-push.err 2>/dev/null)"
