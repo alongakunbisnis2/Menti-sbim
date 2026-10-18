@@ -62,7 +62,8 @@ const stateWithCount = (code) => { const s = R.roomState(code); if (s) { s.parti
 const emit = (code) => { const s = stateWithCount(code); if (s) io.to(s.code).emit("room:update", s); return s; };
 const baseFromReq = (req) => {
   const b = String((req.body && req.body.base) || "").trim().replace(/\/+$/, "");
-  return /^https?:\/\/[a-z0-9.\-]+(:\d+)?$/i.test(b) ? b : baseUrl(req);
+  // base boleh menyertakan sub-path (mis. GitHub Pages: https://user.github.io/Menti-sbim)
+  return /^https?:\/\/[a-z0-9.\-]+(:\d+)?(\/[A-Za-z0-9._~\/\-]*)?$/i.test(b) ? b : baseUrl(req);
 };
 const pidOf = (req, b) => (b && b.pid) || req.ip || "rest";
 

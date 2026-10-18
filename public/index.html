@@ -104,6 +104,8 @@ a{color:inherit}
 
 <script>
 let BACKEND = (typeof SURGE_BACKEND !== 'undefined' && SURGE_BACKEND) || location.origin;
+// base tautan peserta: sertakan sub-path bila situs ditayangkan di /Menti-sbim/
+const APP_BASE = location.origin + location.pathname.replace(/\/[^\/]*$/,'').replace(/\/$/,'');
 let _bk=null;
 function pickBackend(){
   if(_bk) return _bk;
@@ -152,7 +154,7 @@ async function buat(){
  const b=$('btnBuat'),old=b.textContent;b.textContent='MENCETAK…';b.disabled=true;
  try{
  const lines=$('q').value.split('\n').map(s=>s.trim()).filter(Boolean);
- const body = lines.length>1 ? {questions:lines, base:location.origin} : {question:lines[0]||'Apa pendapatmu?', base:location.origin};
+ const body = lines.length>1 ? {questions:lines, base:APP_BASE} : {question:lines[0]||'Apa pendapatmu?', base:APP_BASE};
  const r=await fetch(BACKEND+'/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
  if(!r.ok) throw 0;
  showSession(await r.json());
@@ -168,7 +170,7 @@ async function pakaiTemplate(){
  try{
  const t=await(await fetch('/templates/sbim-camp.json?v='+Date.now())).json();
  tplQs=[...bacaSoal(), ...(t.questions||[]).map(q=>typeof q==='string'?q:(q.text||''))].filter(Boolean);
- const r=await fetch(BACKEND+'/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({questions:tplQs, base:location.origin})});
+ const r=await fetch(BACKEND+'/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({questions:tplQs, base:APP_BASE})});
  if(!r.ok) throw 0;
  showSession(await r.json());
  }catch(e){
