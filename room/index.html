@@ -7,14 +7,14 @@
 <script src="/Menti-sbim/ws-io.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--paper:#F4EADF;--ink:#3A2C1C;--accent:#C62A2A;--yellow:#E9A73C;--green:#5F7A3F;--card:#FDF8F1;--brown:#5A462E;--blue:#4296C6;--cyan:#96C6D2;--sage:#A2AE7E}
+:root{--paper:#E9F2FA;--ink:#082B45;--accent:#00A0E2;--yellow:#FFD400;--green:#149E6E;--card:#FFFFFF;--brown:#4A6A80;--blue:#0B7FB8;--cyan:#9CD4EE;--sage:#A8C6D8}
 body{background:var(--paper);color:var(--ink);font-family:'Archivo',sans-serif}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(rgba(58,44,28,.12) 1px,transparent 1px);background-size:22px 22px;mask-image:linear-gradient(#000,transparent 70%)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(rgba(8,43,69,.12) 1px,transparent 1px);background-size:22px 22px;mask-image:linear-gradient(#000,transparent 70%)}
 .mono{font-family:'Space Mono',monospace}.disp{font-family:'Archivo Black',sans-serif}
 .card{background:var(--card);border:2px solid var(--ink);border-radius:14px;box-shadow:5px 5px 0 var(--ink)}
 .btn{display:block;text-align:center;font-weight:800;border:2px solid var(--ink);border-radius:12px;padding:15px;box-shadow:4px 4px 0 var(--ink);transition:transform .08s,box-shadow .08s;cursor:pointer;font-size:17px;background:#fff;color:var(--ink)}
 .btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
-.btn-red{background:var(--accent);color:#fff}
+.btn-red{background:var(--accent);color:var(--ink)}
 .btn-picked{background:var(--yellow)}
 .btn:disabled{opacity:.55}
 .field{width:100%;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:13px 14px;font-size:16px;outline:none}
@@ -24,13 +24,13 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background-im
 .opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:13px 14px;font-weight:700;box-shadow:3px 3px 0 var(--ink);cursor:pointer}
 .opt:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
 .opt.picked{background:var(--yellow)}
-.opt.right{background:#D9F0E2;border-color:var(--green)}
+.opt.right{background:#D8F3E4;border-color:var(--green)}
 .opt.wrong{opacity:.55}
 .oletter{font-family:'Archivo Black';border:2px solid var(--ink);border-radius:8px;min-width:32px;height:32px;display:grid;place-items:center;background:var(--paper);font-size:14px}
 .shake{animation:shake .35s}@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 .fin{animation:fin .5s cubic-bezier(.2,1,.3,1) both}@keyframes fin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 ol.top{list-style:none;margin:0;padding:0}
-ol.top li{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-top:1.5px solid rgba(58,44,28,.15)}
+ol.top li{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-top:1.5px solid rgba(8,43,69,.15)}
 ol.top li:first-child{border-top:none}
 .rank{font-family:'Archivo Black';font-size:15px;min-width:30px;color:transparent;-webkit-text-stroke:1.4px var(--ink)}
 li:first-child .rank{color:var(--accent);-webkit-text-stroke:0}
@@ -44,7 +44,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .sbim-chip{display:inline-flex;align-items:center;background:var(--paper);border:2px solid var(--ink);border-radius:9px;padding:3px 7px}
 .sbim-word{color:var(--brown);letter-spacing:0}
 </style>
-<script src="/Menti-sbim/config.js?v=1792340482"></script>
+<script src="/Menti-sbim/config.js?v=1792340890"></script>
 </head>
 <body class="min-h-screen">
 <div id="gate" class="gate fin">
@@ -221,7 +221,7 @@ function renderQaList() {
   if (!el || !D || D.kind !== 'qa') return;
   const items = (D.result.items || []).slice(0, 20);
   el.innerHTML = items.length ? items.map(it =>
-    `<div class="flex items-center gap-2 py-2" style="border-top:1.5px solid rgba(58,44,28,.15)">
+    `<div class="flex items-center gap-2 py-2" style="border-top:1.5px solid rgba(8,43,69,.15)">
     <button class="upbtn ${it.voters.includes(pid) ? 'on' : ''}" onclick="upvote('${it.id}')">▲ ${it.votes}</button>
     <span class="font-medium text-[15px] flex-1">${it.text}</span></div>`).join('')
     : '<div class="text-neutral-400 text-sm py-2">Belum ada pertanyaan.</div>';
@@ -278,7 +278,7 @@ function renderTop() {
     const t = D.result.tally || [], tot = D.result.total || 0;
     el.innerHTML = (tot ? '' : '<div class="text-neutral-400 text-sm mb-1">Belum ada suara.</div>') + t.map(o =>
       `<div class="flex items-center gap-2 py-1"><span class="oletter" style="min-width:28px;height:28px;font-size:12px">${o.id}</span>
-      <div class="flex-1" style="height:20px;background:rgba(23,19,12,.08);border-radius:6px;overflow:hidden"><div style="height:100%;width:${o.pct}%;background:${D.reveal && o.correct ? 'var(--green)' : 'var(--ink)'};transition:width .5s"></div></div>
+      <div class="flex-1" style="height:20px;background:rgba(8,43,69,.08);border-radius:6px;overflow:hidden"><div style="height:100%;width:${o.pct}%;background:${D.reveal && o.correct ? 'var(--green)' : 'var(--ink)'};transition:width .5s"></div></div>
       <span class="mono text-[12px] font-bold">${o.pct}%</span></div>`).join('')
       + (D.kind === 'quiz' && D.board && D.board.length ? `<div class="mono text-[11px] tracking-[.2em] font-bold mt-3">PAPAN SKOR</div><ol class="top">${D.board.slice(0, 5).map((b, i) => `<li><span class="rank">${String(i + 1).padStart(2, '0')}</span><span class="font-bold flex-1">${b.name}</span><span class="mono text-[12px] font-bold">${b.score}</span></li>`).join('')}</ol>` : '');
   } else if (D.kind === 'qa') {
@@ -289,7 +289,7 @@ function renderTop() {
     const a = D.result.avg || [], tot = D.result.total || 0;
     el.innerHTML = (tot ? '' : '<div class="text-neutral-400 text-sm mb-1">Belum ada yang membagi poin.</div>') + a.map(o =>
       `<div class="flex items-center gap-2 py-1"><span class="font-bold text-[14px]" style="min-width:90px">${o.text}</span>
-      <div class="flex-1" style="height:20px;background:rgba(23,19,12,.08);border-radius:6px;overflow:hidden"><div style="height:100%;width:${o.avg}%;background:var(--accent);transition:width .5s"></div></div>
+      <div class="flex-1" style="height:20px;background:rgba(8,43,69,.08);border-radius:6px;overflow:hidden"><div style="height:100%;width:${o.avg}%;background:var(--accent);transition:width .5s"></div></div>
       <span class="mono text-[12px] font-bold">${o.avg}</span></div>`).join('');
   }
 }
