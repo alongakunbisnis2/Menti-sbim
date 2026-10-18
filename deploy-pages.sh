@@ -45,7 +45,8 @@ else
   cands=$(echo "$cands" | tr ' ' '\n' | sed 's|/$||' | awk 'NF && !seen[$0]++' | sed 's/.*/"&"/' | paste -sd, -)
   {
     printf 'var SURGE_BACKENDS = [%s];\n' "$cands"
-    printf 'var SURGE_BACKEND = "%s";\n' "$U"
+    # backend utama = Workers (24/7, tanpa tunnel); tunnel hanya cadangan
+    printf 'var SURGE_BACKEND = "%s";\n' "$(cat /tmp/url_workers 2>/dev/null || echo "$U")"
   } > "$BUILD/config.js"
 fi
 

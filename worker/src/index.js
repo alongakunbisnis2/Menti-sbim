@@ -37,9 +37,13 @@ async function api(req, env, url) {
     });
     if (!r.ok) return j({ error: "Gagal membuat sesi" }, 500);
     const info = await r.json();
-    const joinUrl = `${baseDari(url)}/room/?code=${code}`;
+    const jalur = /workers\.dev$/i.test(new URL(baseDari(url)).host) ? "/room?code=" : "/room/?code=";
+    const joinUrl = `${baseDari(url)}${jalur}${code}`;
     let qr = null;
-    try { qr = await QRCode.toDataURL(joinUrl, { width: 300 }); } catch (e) {}
+    try {
+      const svg = await QRCode.toString(joinUrl, { type: "svg", width: 320, margin: 1 });
+      qr = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    } catch (e) { qr = null; }
     return j({ code, qTotal: info.qTotal, joinUrl, qr });
   }
 
@@ -80,10 +84,8 @@ export default {
 
     if (p.startsWith("/api/")) return api(req, env, url);
 
-    // berkas statis (public/) + rapikan URL halaman
-    let target = p;
-    if (p === "/room" || p === "/room/") target = "/room.html";
-    if (p === "/presenter" || p === "/presenter/") target = "/presenter.html";
-    return env.ASSETS.fetch(new Request(new URL(target + url.search, url), req));
+    // berkas statis (public/) — biarkan lapisan Assets menangani kanonikalisasi .html
+    // (/room/ -> 307 -> /room -> room.html). Jangan rewrite sendiri: itu membuat loop.
+    return env.ASSETS.fetch(new Request(new URL(p + url.search, url), req));
   }
 };
