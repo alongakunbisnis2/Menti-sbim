@@ -41,7 +41,7 @@ touch "$BUILD/.nojekyll"
 if [ "$U" = "NONE" ]; then
   printf 'var SURGE_BACKENDS = [];\nvar SURGE_BACKEND = "";\n' > "$BUILD/config.js"
 else
-  cands="$U $(cat /tmp/url_cf 2>/dev/null) $(cat /tmp/url_lhr 2>/dev/null) $(cat /tmp/url_pg 2>/dev/null) $(cat /tmp/url_lt 2>/dev/null)"
+  cands="$(cat /tmp/url_workers 2>/dev/null) $U $(cat /tmp/url_cf 2>/dev/null) $(cat /tmp/url_lhr 2>/dev/null) $(cat /tmp/url_pg 2>/dev/null) $(cat /tmp/url_lt 2>/dev/null)"
   cands=$(echo "$cands" | tr ' ' '\n' | sed 's|/$||' | awk 'NF && !seen[$0]++' | sed 's/.*/"&"/' | paste -sd, -)
   {
     printf 'var SURGE_BACKENDS = [%s];\n' "$cands"

@@ -13,3 +13,6 @@ public/config.js
 public/logo-ubaya.png
 public/logo-fbe.png
 pages-deploy.log
+.cf-token
+worker/node_modules/
+.wrangler/
