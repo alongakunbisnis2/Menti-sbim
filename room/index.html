@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<link rel="icon" type="image/png" sizes="48x48" href="/Menti-sbim/sbim-48x48.png"><link rel="apple-touch-icon" href="/Menti-sbim/sbim-48x48.png"><title>Jawab — SBIM</title>
+<link rel="icon" type="image/png" sizes="48x48" href="/Menti-sbim/sbim-48x48.png"><link rel="apple-touch-icon" href="/Menti-sbim/sbim-48x48.png"><link rel="stylesheet" href="/Menti-sbim/sbim-anim.css"><script src="/Menti-sbim/sbim-anim.js" defer></script><title>Jawab — SBIM</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="/Menti-sbim/ws-io.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -44,7 +44,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .sbim-chip{display:inline-flex;align-items:center;background:var(--paper);border:2px solid var(--ink);border-radius:9px;padding:3px 7px}
 .sbim-word{color:var(--brown);letter-spacing:0}
 </style>
-<script src="/Menti-sbim/config.js?v=1792334073"></script>
+<script src="/Menti-sbim/config.js?v=1792336180"></script>
 </head>
 <body class="min-h-screen">
 <div id="gate" class="gate fin">
@@ -157,7 +157,7 @@ function connectSocket() {
 const KIND_ID = { cloud: 'JAWABAN SINGKAT', choice: 'PILIHAN GANDA', quiz: 'KUIS', qa: 'TANYA JAWAB', hundred: '100 POIN', scale: 'SKALA', rank: 'URUTKAN', guess: 'TEBAK ANGKA' };
 
 function showMsg(t, ok) {
-  $('msg').innerHTML = `<div class="fin mt-3 p-3 text-sm font-bold text-center" style="border:2px solid var(--ink);border-radius:10px;background:${ok ? 'var(--yellow)' : '#fff'}">${t}</div>`;
+  $('msg').innerHTML = `<div class="fin mt-3 p-3 text-sm font-bold text-center ${ok ? 'ok' : 'gagal'}" style="border:2px solid var(--ink);border-radius:10px;background:${ok ? 'var(--yellow)' : '#fff'}">${t}</div>`;
   if (ok) setTimeout(() => { $('msg').innerHTML = ''; }, 3500);
 }
 async function post(path, body) {
