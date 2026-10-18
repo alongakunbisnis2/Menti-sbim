@@ -47,6 +47,19 @@ async function api(req, env, url) {
     return j({ code, qTotal: info.qTotal, joinUrl, qr });
   }
 
+  // QR sesi (dipakai layar presenter) — SVG supaya tetap tajam saat dibesarkan
+  const mq = p.match(/^\/api\/rooms\/([A-Za-z0-9]{4,8})\/qr$/);
+  if (mq && m === "GET") {
+    const code = mq[1].toUpperCase();
+    const lebar = Math.min(1000, Math.max(120, Number(url.searchParams.get("w")) || 320));
+    const jalur = /workers\.dev$/i.test(new URL(baseDari(url)).host) ? "/room?code=" : "/room/?code=";
+    const joinUrl = `${baseDari(url)}${jalur}${code}`;
+    try {
+      const svg = await QRCode.toString(joinUrl, { type: "svg", width: lebar, margin: 1 });
+      return j({ joinUrl, qr: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg) });
+    } catch (e) { return j({ error: "QR gagal dibuat" }, 500); }
+  }
+
   // sisanya diteruskan ke Durable Object sesi terkait
   const m2 = p.match(/^\/api\/rooms\/([A-Za-z0-9]{4,8})(?:\/(.*))?$/);
   if (!m2) return j({ error: "Not found" }, 404);

@@ -66,7 +66,7 @@ const broadcast = (code) => {
 const stateWithCount = (code) => { const s = R.roomState(code); if (s) { s.participants = countIn(s.code); s.names = nameList(s.code); } return s; };
 const emit = (code) => { const s = stateWithCount(code); if (s) io.to(s.code).emit("room:update", s); return s; };
 const baseFromReq = (req) => {
-  const b = String((req.body && req.body.base) || "").trim().replace(/\/+$/, "");
+  const b = String((req.body && req.body.base) || (req.query && req.query.base) || "").trim().replace(/\/+$/, "");
   // base boleh menyertakan sub-path (mis. GitHub Pages: https://user.github.io/Menti-sbim)
   return /^https?:\/\/[a-z0-9.\-]+(:\d+)?(\/[A-Za-z0-9._~\/\-]*)?$/i.test(b) ? b : baseUrl(req);
 };
@@ -90,7 +90,8 @@ app.get("/api/rooms/:code/qr", async (req, res) => {
   const room = R.getRoom(req.params.code);
   if (!room) return res.status(404).json({ error: "Not found" });
   const joinUrl = `${baseFromReq(req)}/room/?code=${room.code}`;
-  res.json({ joinUrl, qr: await QRCode.toDataURL(joinUrl, { width: 300 }) });
+  const lebar = Math.min(1000, Math.max(120, Number(req.query.w) || 300));
+  res.json({ joinUrl, qr: await QRCode.toDataURL(joinUrl, { width: lebar }) });
 });
 app.post("/api/rooms/:code/summarize", async (req, res) => {
   const s = R.roomState(req.params.code);
