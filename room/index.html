@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<link rel="icon" href="/sbim-favicon.png"><title>Jawab — SBIM</title>
+<link rel="icon" href="/Menti-sbim/sbim-favicon.png"><title>Jawab — SBIM</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -44,12 +44,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .sbim-chip{display:inline-flex;align-items:center;background:var(--paper);border:2px solid var(--ink);border-radius:9px;padding:3px 7px}
 .sbim-word{color:var(--brown);letter-spacing:0}
 </style>
+<script src="/Menti-sbim/Menti-sbim/config.js"></script>
 </head>
 <body class="min-h-screen">
 <div id="gate" class="gate fin">
 <div class="gate-in">
 <div class="card p-6" style="border-width:3px">
-<img src="/sbim-wordmark.png" alt="SBIM 2026" style="height:30px;width:auto;display:block">
+<img src="/Menti-sbim/sbim-wordmark.png" alt="SBIM 2026" style="height:30px;width:auto;display:block">
 <h1 class="disp mt-3" style="font-size:31px;line-height:1.05">Gabung sesi</h1>
 <div class="mono text-[11px] tracking-[.2em] font-bold text-neutral-500 mt-2">KODE SESI <span id="gateCode" class="text-neutral-900">—</span></div>
 <label class="mono text-[11px] tracking-[.2em] font-bold block mt-5">NAMA KAMU</label>
@@ -63,7 +64,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
 <div class="max-w-md mx-auto px-4 py-6 relative">
 <div class="flex items-center justify-between fin">
-<a href="/" aria-label="SBIM"><img src="/sbim-wordmark.png" alt="SBIM 2026" style="height:20px;width:auto;display:block"></a>
+<a href="/Menti-sbim/" aria-label="SBIM"><img src="/Menti-sbim/sbim-wordmark.png" alt="SBIM 2026" style="height:20px;width:auto;display:block"></a>
 <span id="conn" class="mono text-[11px] font-bold">···</span>
 </div>
 

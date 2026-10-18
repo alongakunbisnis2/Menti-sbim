@@ -1,9 +1,0 @@
-node_modules/
-bin/
-surge/
-*.log
-.server.pid
-.public_url
-.public_url.dead
-.surge-old-token
-public/config.js
