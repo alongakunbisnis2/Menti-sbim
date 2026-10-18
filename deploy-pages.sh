@@ -22,6 +22,7 @@ cp public/templates/sbim-camp.json "$BUILD/templates/"
 cp public/*.png "$BUILD/" 2>/dev/null
 cp public/*.svg "$BUILD/" 2>/dev/null
 cp public/*.ico "$BUILD/" 2>/dev/null
+cp public/ws-io.js "$BUILD/" 2>/dev/null
 cp public/index.html      "$BUILD/index.html"
 cp public/room.html       "$BUILD/room/index.html"
 cp public/presenter.html  "$BUILD/presenter/index.html"
@@ -32,7 +33,7 @@ for f in "$BUILD/index.html" "$BUILD/room/index.html" "$BUILD/presenter/index.ht
   # rujukan dalam situs ("/xxx") -> sub-path Pages ("$BASE/xxx"); literal JS pakai kutip tunggal jadi tidak tersentuh
   sed -i "s|\"/|\"$BASE/|g" "$f"
   # config.js disuntik TERAKHIR supaya tidak kena prefiks ganda
-  sed -i "s|</head>|<script src=\"$BASE/config.js\"></script>\n</head>|" "$f"
+  sed -i "s|</head>|<script src=\"$BASE/config.js?v=$(date +%s)\"></script>\n</head>|" "$f"
 done
 touch "$BUILD/.nojekyll"
 

@@ -47,7 +47,12 @@ const rememberName = (code, pid, name) => {
   people.get(code).set(pid || "x", String(name).slice(0, 24));
 };
 const nameList = (code) => [...new Set([...((people.get(String(code || "").toUpperCase()) || new Map()).values())])];
-const countIn = (code) => { const set = io.sockets.adapter.rooms.get(String(code || "").toUpperCase()); return set ? set.size : 0; };
+const wsRooms = new Map(); // code -> Set(ws): klien WebSocket asli (protokol sama dgn versi Cloudflare)
+const countIn = (code) => {
+  const c = String(code || "").toUpperCase();
+  const set = io.sockets.adapter.rooms.get(c);
+  return (set ? set.size : 0) + ((wsRooms.get(c) || new Set()).size);
+};
 const _pending = new Map(); // code -> timer (batch siaran)
 const broadcast = (code) => {
   const c = String(code || "").toUpperCase();
@@ -273,6 +278,98 @@ io.on("connection", (socket) => {
     q.hidden.has(text) ? q.hidden.delete(text) : q.hidden.add(text);
     emit(room.code);
   });
+});
+
+// --- WebSocket asli di /ws ---
+// Protokol JSON {e,d} yang sama dengan versi Cloudflare, supaya halaman (ws-io.js)
+// bisa dipakai baik saat disajikan server ini (LAN/tunnel) maupun Workers/Durable Objects.
+const { WebSocketServer } = require("ws");
+const wss = new WebSocketServer({ server, path: "/ws" });
+wss.on("connection", (ws, req) => {
+  const q = new URL(req.url, "http://lokal").searchParams;
+  let code = String(q.get("code") || "").toUpperCase();
+  let pid = q.get("pid") || ("ws-" + Math.random().toString(36).slice(2, 8));
+  if (q.get("name")) rememberName(code, pid, q.get("name"));
+  const masuk = () => { if (!wsRooms.has(code)) wsRooms.set(code, new Set()); wsRooms.get(code).add(ws); };
+  const keluar = () => { const s = wsRooms.get(code); if (s) { s.delete(ws); if (!s.size) wsRooms.delete(code); } };
+  const balas = (e, d) => { try { ws.send(JSON.stringify({ e, d })); } catch {} };
+  if (code) masuk();
+  const s0 = stateWithCount(code); if (s0) balas("room:update", s0);
+  if (code) broadcast(code);
+
+  ws.on("message", (raw) => {
+    let msg; try { msg = JSON.parse(String(raw)); } catch { return; }
+    const b = msg.d || {}, ev = msg.e;
+    if (b && b.pid) pid = b.pid;
+    if (b && b.code) { const baru = String(b.code).toUpperCase(); if (baru !== code) { keluar(); code = baru; masuk(); } }
+    if (b && b.name) rememberName(code, pid, b.name);
+    let r;
+    switch (ev) {
+      case "join-room": {
+        if (b.name) rememberName(code, pid, b.name);
+        const s = stateWithCount(code); if (s) balas("room:update", s);
+        broadcast(code); return;
+      }
+      case "participant:answer": {
+        const room = R.getRoom(code);
+        if (!room) return balas("answer:error", "Kode tidak ditemukan");
+        const kind = room.questions[room.qIndex].kind;
+        r = R.submitText(code, b.text, pid, kind === "qa" ? "qa" : "cloud");
+        if (r.error) return balas("answer:error", r.error);
+        return void emit(r.room.code);
+      }
+      case "participant:vote": {
+        r = R.voteChoice(code, { optionId: b.optionId, pid, name: b.name });
+        if (r.error) return balas("answer:error", r.error);
+        balas("vote:scored", { score: r.score });
+        return void emit(r.room.code);
+      }
+      case "participant:upvote": {
+        r = R.upvote(code, b.itemId, pid);
+        if (r.error) return balas("answer:error", r.error);
+        return void emit(r.room.code);
+      }
+      case "participant:scale": {
+        r = R.submitScale(code, b);
+        balas("answer:ack", r.error ? { error: r.error } : { ok: true });
+        if (!r.error) broadcast(code);
+        return;
+      }
+      case "participant:rank": {
+        r = R.submitRank(code, b);
+        balas("answer:ack", r.error ? { error: r.error } : { ok: true });
+        if (!r.error) broadcast(code);
+        return;
+      }
+      case "participant:guess": {
+        r = R.submitGuess(code, b);
+        if (r.error) return balas("answer:error", r.error);
+        broadcast(code); balas("vote:scored", { score: r.score });
+        return;
+      }
+      case "participant:hundred": {
+        r = R.submitHundred(code, { alloc: b.alloc, pid, name: b.name });
+        if (r.error) return balas("answer:error", r.error);
+        return void emit(r.room.code);
+      }
+      case "admin:show-results": { r = R.setShowResults(code, b.show); if (!r.error) emit(r.room.code); return; }
+      case "admin:update-question": { r = R.setQuestionText(code, b.question); if (!r.error) emit(r.room.code); return; }
+      case "admin:add-question": { r = R.addQuestion(code, b.q || {}); if (!r.error) emit(r.room.code); return; }
+      case "admin:goto-question": { r = R.gotoQuestion(code, b.index); if (!r.error) emit(r.room.code); return; }
+      case "admin:reveal": { r = R.setReveal(code, b.reveal); if (!r.error) emit(r.room.code); return; }
+      case "admin:toggle-lock": { const room = R.getRoom(code); if (room) { room.locked = !!b.locked; emit(room.code); } return; }
+      case "admin:clear": { const room = R.getRoom(code); if (room) { R.clearCurrent(room.code); emit(room.code); } return; }
+      case "admin:hide": {
+        const room = R.getRoom(code); if (!room) return;
+        const q2 = room.questions[room.qIndex];
+        q2.hidden.has(b.text) ? q2.hidden.delete(b.text) : q2.hidden.add(b.text);
+        emit(room.code); return;
+      }
+      default: return;
+    }
+  });
+  ws.on("close", () => { keluar(); if (code) broadcast(code); });
+  ws.on("error", () => { try { ws.close(); } catch {} });
 });
 
 server.listen(PORT, "0.0.0.0", () => {

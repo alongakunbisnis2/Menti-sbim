@@ -1,0 +1,19 @@
+name = "menti-sbim"
+main = "src/index.js"
+compatibility_date = "2026-10-18"
+compatibility_flags = ["nodejs_compat"]
+
+# halaman statis (index/room/presenter/templates/logo) gratis & tanpa batas
+[assets]
+directory = "../public"
+binding = "ASSETS"
+run_worker_first = true
+
+# satu Durable Object per sesi (WebSocket realtime, tersedia di paket gratis)
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
