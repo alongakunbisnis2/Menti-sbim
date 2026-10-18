@@ -23,6 +23,8 @@ cp public/*.png "$BUILD/" 2>/dev/null
 cp public/*.svg "$BUILD/" 2>/dev/null
 cp public/*.ico "$BUILD/" 2>/dev/null
 cp public/ws-io.js "$BUILD/" 2>/dev/null
+cp public/sbim-anim.js "$BUILD/" 2>/dev/null
+cp public/*.css "$BUILD/" 2>/dev/null
 cp public/index.html      "$BUILD/index.html"
 cp public/room.html       "$BUILD/room/index.html"
 cp public/presenter.html  "$BUILD/presenter/index.html"
