@@ -16,3 +16,4 @@ pages-deploy.log
 .cf-token
 worker/node_modules/
 .wrangler/
+backup/
