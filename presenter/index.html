@@ -42,10 +42,26 @@ select.field{width:auto}
 .sbim-wordmark{height:1em;width:auto;display:block;flex:0 0 auto}
 .sbim-chip{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border-radius:9px;padding:4px 9px}
 .sbim-word{color:var(--paper);letter-spacing:0}
+#qrgrande{position:fixed;inset:0;z-index:60;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:26px}
+#qrgrande .kotak{background:#fff;border-radius:20px;padding:16px;box-shadow:0 0 0 7px var(--yellow)}
+#qrgrande img{width:min(58vh,58vw);height:min(58vh,58vw);display:block}
+#qrgrande .tutup{position:absolute;top:14px;right:16px}
+#qrgrande .url{font-size:12px;color:rgba(244,234,223,.6);word-break:break-all;max-width:80vw}
+.qrbox{cursor:pointer}
 </style>
-<script src="/Menti-sbim/config.js?v=1792338884"></script>
+<script src="/Menti-sbim/config.js?v=1792339996"></script>
 </head>
 <body class="min-h-screen">
+<div id="qrgrande" class="hidden">
+<button onclick="tutupQr()" class="btn btn-red tutup">TUTUP QR</button>
+<div class="mono text-[12px] tracking-[.35em] font-bold" style="color:var(--yellow)">SCAN QR UNTUK IKUT</div>
+<div class="kotak"><img id="qrbesar" alt="QR gabung besar"></div>
+<div class="mono text-[11px] tracking-[.25em] font-bold" style="color:rgba(244,234,223,.6)">ATAU KETIK KODE</div>
+<span id="kodebesar" class="codeplate disp px-5 py-1" style="font-size:clamp(38px,7vw,80px);letter-spacing:.12em">······</span>
+<div class="url mono" id="urlbesar"></div>
+<div class="mono" id="tungguqr" style="color:rgba(244,234,223,.75)">Menunggu peserta pertama</div>
+</div>
+
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 relative">
 <div class="flex items-center justify-between mb-3">
 <span class="sbim-chip"><img src="/Menti-sbim/sbim-logo.svg" alt="SBIM 2026 — School of Business Innovation and Management" style="height:22px;width:auto;display:block"></span>
@@ -54,7 +70,7 @@ select.field{width:auto}
 <!-- scoreboard -->
 <div class="scoreboard flex flex-wrap items-center gap-4 px-4 sm:px-5 py-3">
 <div class="flex items-center gap-3">
-<div class="qrbox"><img id="qr" class="w-14 h-14 block" alt="QR gabung"></div>
+<div class="qrbox" title="Klik untuk menampilkan QR besar" onclick="bukaQr()"><img id="qr" class="w-14 h-14 block" alt="QR gabung"></div>
 <div>
 <div class="mono text-[10px] tracking-[.25em] font-bold text-neutral-600">SCAN UNTUK IKUT — KODE</div>
 <span id="code" class="codeplate disp px-3 py-0.5" style="font-size:30px;letter-spacing:.1em">······</span>
@@ -188,8 +204,25 @@ function paintPeople(d){
 }
 function syncPeople(){ const b=$('btnPeople'); if(!b) return; b.textContent='PESERTA: '+(showPeople?'ON':'OFF'); b.classList.toggle('on',showPeople); }
 function togglePeople(){ showPeople=!showPeople; syncPeople(); if(D) paint(D); }
+// ---- QR besar: tampil sendiri sampai peserta pertama bergabung ----
+let qrPaksa=false, pernahGabung=false;
+function syncQr(d){
+ const el=$('qrgrande'); if(!el) return;
+ const nama=(d&&d.names)||[], total=(d&&d.result&&d.result.total)||0, ada=(nama.length>0||total>0);
+ if(ada) pernahGabung=true;
+ const tampil=(qrPaksa||!pernahGabung)&&!!code;
+ el.classList.toggle('hidden',!tampil);
+ if(!tampil) return;
+ const src=$('qr').src; const big=$('qrbesar');
+ if(src&&big.getAttribute('src')!==src) big.setAttribute('src',src);
+ $('kodebesar').textContent=code||'······';
+ $('urlbesar').textContent=window._joinUrl||'';
+ const t=$('tungguqr'); if(t) t.style.display=ada?'none':'';
+}
+function bukaQr(){ qrPaksa=true; syncQr(D); }
+function tutupQr(){ qrPaksa=false; pernahGabung=true; syncQr(D); }
 function paint(d){
- D=d; const R=d.result;
+ D=d; const R=d.result; syncQr(d);
  if(showPeople) return paintPeople(d);
  $('total').textContent=(R.total||0)+((d.kind==='hundred')?' penjawab':(d.kind==='qa')?' pertanyaan':' suara');
  if(d.kind==='cloud') return paintCloud(R);
@@ -294,7 +327,7 @@ async function init(){
  if(!r.ok) throw 0;
  const d=await r.json();
  lockState=d.locked; syncLock(); syncQ(d); paint(d); syncReveal();
- try{const q2=await(await fetch(BACKEND+'/api/rooms/'+code+'/qr')).json(); if(q2.qr)$('qr').src=q2.qr;}catch(e){}
+ try{const q2=await(await fetch(BACKEND+'/api/rooms/'+code+'/qr?w=800&base='+encodeURIComponent(location.origin+location.pathname.replace(/\/[^\/]*$/,'').replace(/\/$/,'')))).json(); if(q2.qr){window._joinUrl=q2.joinUrl||'';$('qr').src=q2.qr;$('qrbesar').setAttribute('src',q2.qr);syncQr(D);}}catch(e){}
  socket=io(BACKEND);
  socket.on('connect',()=>socket.emit('join-room',code));
  socket.on('room:update',dd=>{lockState=dd.locked;syncLock();syncQ(dd);paint(dd);syncReveal();});
