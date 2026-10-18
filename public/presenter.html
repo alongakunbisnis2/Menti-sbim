@@ -7,29 +7,29 @@
 <script src="/ws-io.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--paper:#F4EADF;--ink:#2A2013;--accent:#C62A2A;--yellow:#E9A73C;--card:#1F1A11;--brown:#5A462E}
+:root{--paper:#E7F1F9;--ink:#04192B;--accent:#00A0E2;--yellow:#FFD400;--card:#0D2B42;--brown:#8FB3C9}
 body{background:var(--ink);color:var(--paper);font-family:'Archivo',sans-serif}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(rgba(244,234,223,.07) 1px,transparent 1px);background-size:26px 26px;mask-image:linear-gradient(#000,transparent 80%)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(rgba(233,242,250,.07) 1px,transparent 1px);background-size:26px 26px;mask-image:linear-gradient(#000,transparent 80%)}
 .mono{font-family:'Space Mono',monospace}.disp{font-family:'Archivo Black',sans-serif}
 .scoreboard{background:var(--paper);color:var(--ink);border:2px solid var(--paper);border-radius:14px}
 .codeplate{background:var(--yellow);border:2px solid var(--ink);border-radius:10px;box-shadow:3px 3px 0 rgba(0,0,0,.45);transform:rotate(-1.5deg)}
 .btn{font-weight:800;font-size:13px;border:2px solid var(--paper);border-radius:10px;padding:9px 14px;transition:transform .08s;cursor:pointer;background:transparent;color:var(--paper)}
 .btn:active{transform:translateY(2px)}
 .btn-solid{background:var(--paper);color:var(--ink)}
-.btn-red{background:var(--accent);border-color:var(--accent);color:#1A0B08}
-.btn.on{background:var(--yellow);border-color:var(--yellow);color:#1A0B08}
-.board{background:var(--card);border:2px solid rgba(245,241,232,.22);border-radius:18px}
+.btn-red{background:var(--accent);border-color:var(--accent);color:#04192B}
+.btn.on{background:var(--yellow);border-color:var(--yellow);color:#04192B}
+.board{background:var(--card);border:2px solid rgba(231,241,249,.22);border-radius:18px}
 .w{font-family:'Archivo Black';line-height:1.05;cursor:pointer;animation:pop .45s cubic-bezier(.2,1.3,.4,1) both;transition:transform .15s}
 .w:hover{transform:scale(1.07)!important}
 @keyframes pop{from{opacity:0;transform:scale(.7)}to{opacity:1}}
-.bar-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid rgba(245,241,232,.14);cursor:pointer}
+.bar-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid rgba(231,241,249,.14);cursor:pointer}
 .bar-row:first-child{border-top:none}
-.bar-track{flex:1;height:30px;background:rgba(245,241,232,.1);border-radius:8px;overflow:hidden;position:relative}
-.bar-fill{height:100%;border-radius:8px;transition:width .7s cubic-bezier(.2,1,.3,1);display:flex;align-items:center;justify-content:flex-end;padding-right:10px;font-weight:800;color:#14110B}
+.bar-track{flex:1;height:30px;background:rgba(231,241,249,.1);border-radius:8px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:8px;transition:width .7s cubic-bezier(.2,1,.3,1);display:flex;align-items:center;justify-content:flex-end;padding-right:10px;font-weight:800;color:#04192B}
 .qrbox{background:#fff;border-radius:10px;padding:5px}
 #sum:empty{display:none}
 .live-dot{animation:blink 1.5s infinite}@keyframes blink{50%{opacity:.25}}
-.qarow{display:flex;align-items:baseline;gap:12px;padding:10px 0;border-top:1px solid rgba(245,241,232,.14)}
+.qarow{display:flex;align-items:baseline;gap:12px;padding:10px 0;border-top:1px solid rgba(231,241,249,.14)}
 .qarow:first-child{border-top:none}
 .qavotes{font-family:'Archivo Black';font-size:22px;min-width:64px;color:var(--yellow)}
 .field{background:#fff;color:#111;border-radius:8px;padding:8px 10px;font-size:13px;width:100%;outline:none;font-weight:600}
@@ -37,8 +37,8 @@ select.field{width:auto}
 .kindtag{font-family:'Space Mono';font-size:11px;font-weight:700;letter-spacing:.2em;border:2px solid var(--yellow);color:var(--yellow);border-radius:999px;padding:3px 12px}
 .bigletter{font-family:'Archivo Black';font-size:20px;min-width:38px;text-align:center}
 .sbim-lockup{display:inline-flex;align-items:center;gap:.34em;font-family:'Archivo Black',sans-serif;white-space:nowrap}
-.prow{display:flex;align-items:center;gap:14px;padding:12px 16px;border:2px solid rgba(245,241,232,.28);border-radius:12px;color:var(--paper);background:rgba(245,241,232,.05)}
-.pname{display:inline-block;padding:6px 14px;border:2px solid rgba(245,241,232,.32);border-radius:999px;font-weight:800;font-size:16px;color:var(--paper)}
+.prow{display:flex;align-items:center;gap:14px;padding:12px 16px;border:2px solid rgba(231,241,249,.28);border-radius:12px;color:var(--paper);background:rgba(231,241,249,.05)}
+.pname{display:inline-block;padding:6px 14px;border:2px solid rgba(231,241,249,.32);border-radius:999px;font-weight:800;font-size:16px;color:var(--paper)}
 .sbim-wordmark{height:1em;width:auto;display:block;flex:0 0 auto}
 .sbim-chip{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border-radius:9px;padding:4px 9px}
 .sbim-word{color:var(--paper);letter-spacing:0}
@@ -48,7 +48,7 @@ select.field{width:auto}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 relative">
 <div class="flex items-center justify-between mb-3">
 <span class="sbim-chip"><img src="/sbim-logo.svg" alt="SBIM 2026 — School of Business Innovation and Management" style="height:22px;width:auto;display:block"></span>
-<span class="mono text-[11px] tracking-[.25em] font-bold" style="color:rgba(245,241,232,.55)">PAPAN SUARA PESERTA</span>
+<span class="mono text-[11px] tracking-[.25em] font-bold" style="color:rgba(231,241,249,.55)">PAPAN SUARA PESERTA</span>
 </div>
 <!-- scoreboard -->
 <div class="scoreboard flex flex-wrap items-center gap-4 px-4 sm:px-5 py-3">
@@ -80,12 +80,12 @@ select.field{width:auto}
 </div>
 <div class="flex items-center justify-center gap-3 mt-2 mb-4">
 <button onclick="goQ(qIdx-1)" class="btn">‹</button>
-<span id="qcount" class="mono text-[12px] font-bold" style="color:rgba(245,241,232,.7)">SOAL 1/1</span>
+<span id="qcount" class="mono text-[12px] font-bold" style="color:rgba(231,241,249,.7)">SOAL 1/1</span>
 <button onclick="goQ(qIdx+1)" class="btn">›</button>
 <button onclick="toggleAdd()" class="btn">+ SOAL</button>
 </div>
 <div id="addbox" class="board max-w-2xl mx-auto mb-5 p-4 hidden">
-<div class="mono text-[11px] tracking-[.2em] font-bold mb-2" style="color:rgba(245,241,232,.6)">SOAL BARU</div>
+<div class="mono text-[11px] tracking-[.2em] font-bold mb-2" style="color:rgba(231,241,249,.6)">SOAL BARU</div>
 <input id="newq" placeholder="Tulis soal…" class="field mb-2">
 <div class="flex flex-wrap gap-2 mb-2">
 <select id="newkind" class="field">
@@ -117,7 +117,7 @@ select.field{width:auto}
 
 <!-- standings -->
 <div class="board mt-4 px-5 py-4">
-<div class="mono text-[11px] tracking-[.25em] font-bold mb-1" style="color:rgba(245,241,232,.6)">RINCIAN <span class="normal-case tracking-normal font-medium">(klik bar untuk sembunyikan)</span></div>
+<div class="mono text-[11px] tracking-[.25em] font-bold mb-1" style="color:rgba(231,241,249,.6)">RINCIAN <span class="normal-case tracking-normal font-medium">(klik bar untuk sembunyikan)</span></div>
 <div id="bars"></div>
 </div>
 <div id="boardwrap" class="board mt-4 px-5 py-4" style="display:none">
@@ -152,7 +152,7 @@ function pickBackend(){
 const code = new URLSearchParams(location.search).get('code')?.toUpperCase() || '';
 document.getElementById('code').textContent = code || '———';
 const $ = id => document.getElementById(id);
-const PALETTE = ['#F5F1E8','#FFC53D','#FF7A59','#9BC79B','#E8E0D0','#FF5140'];
+const PALETTE = ['#9CD4EE','#FFD400','#7FE3D6','#B8E39B','#E7F1F9','#00A0E2'];
 const KIND_ID = { cloud: 'JAWABAN SINGKAT', choice: 'PILIHAN GANDA', quiz: 'KUIS', qa: 'TANYA JAWAB', hundred: '100 POIN', scale: 'SKALA', rank: 'URUTKAN', guess: 'TEBAK ANGKA' };
 let lockState = false, socket = null, qIdx = 0, qTotal = 1, D = null, showResults = false, showPeople = false;
 const DEFAULT_KIND = 'cloud';
@@ -178,11 +178,11 @@ function paintPeople(d){
  $('total').textContent=names.length+' sudah gabung';
  $('stage').innerHTML=`<div class="w-full text-center">
   <div class="disp" style="font-size:clamp(28px,4.2vw,56px);line-height:1.05">Kamu sudah masuk! 🎉</div>
-  <div class="mono text-[14px] font-bold mt-3" style="color:rgba(245,241,232,.6)">Cari namamu di layar</div>
+  <div class="mono text-[14px] font-bold mt-3" style="color:rgba(231,241,249,.6)">Cari namamu di layar</div>
   <div class="flex flex-wrap items-center justify-center gap-2 mt-8 max-w-5xl mx-auto">
    ${names.map(n=>`<span class="pname">${String(n).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</span>`).join('')}
   </div>
-  ${names.length?'':'<div class="mono mt-8" style="color:rgba(245,241,232,.5)">Belum ada yang gabung — minta peserta scan QR.</div>'}
+  ${names.length?'':'<div class="mono mt-8" style="color:rgba(231,241,249,.5)">Belum ada yang gabung — minta peserta scan QR.</div>'}
  </div>`;
 }
 function syncPeople(){ const b=$('btnPeople'); if(!b) return; b.textContent='PESERTA: '+(showPeople?'ON':'OFF'); b.classList.toggle('on',showPeople); }
@@ -205,14 +205,14 @@ function paintScale(d,R){
   <div class="flex items-end justify-center gap-3" style="height:48vh">
    ${dist.map(x=>`<div class="flex flex-col items-center justify-end" style="height:100%">
      <span class="mono" style="color:var(--paper);font-weight:800;margin-bottom:6px;font-size:15px">${x.count||''}</span>
-     <div style="width:${bw};height:${Math.max(3,x.count/maxv*100)}%;background:${x.count&&x.count/maxv>.66?'var(--yellow)':'rgba(245,241,232,.82)'};border-radius:6px 6px 0 0"></div>
+     <div style="width:${bw};height:${Math.max(3,x.count/maxv*100)}%;background:${x.count&&x.count/maxv>.66?'var(--yellow)':'rgba(231,241,249,.82)'};border-radius:6px 6px 0 0"></div>
    </div>`).join('')}
   </div>
-  <div class="flex items-center justify-center gap-3 mt-3" style="color:rgba(245,241,232,.7)">
+  <div class="flex items-center justify-center gap-3 mt-3" style="color:rgba(231,241,249,.7)">
    ${dist.map(x=>`<span class="mono font-bold" style="width:${bw}">${x.value}</span>`).join('')}
   </div>
-  <div class="disp mt-7" style="font-size:clamp(26px,3.4vw,46px)">Rata-rata ${R.avg}<span style="font-size:.5em;color:rgba(245,241,232,.6)"> / ${R.max}</span></div>
-  ${(R.low||R.high)?`<div class="flex justify-center gap-16 mono text-[13px] font-bold mt-2" style="color:rgba(245,241,232,.6)"><span>${R.low||''}</span><span>${R.high||''}</span></div>`:''}
+  <div class="disp mt-7" style="font-size:clamp(26px,3.4vw,46px)">Rata-rata ${R.avg}<span style="font-size:.5em;color:rgba(231,241,249,.6)"> / ${R.max}</span></div>
+  ${(R.low||R.high)?`<div class="flex justify-center gap-16 mono text-[13px] font-bold mt-2" style="color:rgba(231,241,249,.6)"><span>${R.low||''}</span><span>${R.high||''}</span></div>`:''}
  </div>`;
 }
 function paintRank(d,R){
@@ -221,23 +221,23 @@ function paintRank(d,R){
   ${rows.map((x,i)=>`<div class="prow" style="${i===0?'border-color:var(--yellow)':''}">
     <span class="disp" style="font-size:clamp(20px,2.2vw,28px);min-width:46px">${i+1}</span>
     <span class="font-bold" style="flex:1;font-size:clamp(15px,1.7vw,23px)">${x.text}</span>
-    <span class="mono text-[12px]" style="color:rgba(245,241,232,.65)">rata2 #${x.avgPos}${x.firsts?' · '+x.firsts+'× teratas':''}</span>
+    <span class="mono text-[12px]" style="color:rgba(231,241,249,.65)">rata2 #${x.avgPos}${x.firsts?' · '+x.firsts+'× teratas':''}</span>
     <span class="mono font-bold" style="width:58px;text-align:right">${x.score}</span>
    </div>`).join('')}
-  ${rows.length?'':'<div class="mono text-center mt-8" style="color:rgba(245,241,232,.5)">Belum ada yang mengurutkan.</div>'}
+  ${rows.length?'':'<div class="mono text-center mt-8" style="color:rgba(231,241,249,.5)">Belum ada yang mengurutkan.</div>'}
  </div>`;
 }
 function paintGuess(d,R){
  const dist=R.dist||[], maxv=Math.max(1,...dist.map(x=>x.count));
  $('stage').innerHTML=`<div class="w-full text-center">
   <div class="flex items-end justify-center gap-1.5" style="height:36vh">
-   ${dist.map(x=>`<div style="width:clamp(18px,4.6vw,66px);height:${Math.max(2,x.count/maxv*100)}%;background:${x.count?'var(--yellow)':'rgba(245,241,232,.14)'};border-radius:5px 5px 0 0"></div>`).join('')}
+   ${dist.map(x=>`<div style="width:clamp(18px,4.6vw,66px);height:${Math.max(2,x.count/maxv*100)}%;background:${x.count?'var(--yellow)':'rgba(231,241,249,.14)'};border-radius:5px 5px 0 0"></div>`).join('')}
   </div>
-  <div class="flex justify-between mono text-[11px] font-bold mt-2 max-w-3xl mx-auto" style="color:rgba(245,241,232,.55)"><span>${R.min}</span><span>${R.max}</span></div>
+  <div class="flex justify-between mono text-[11px] font-bold mt-2 max-w-3xl mx-auto" style="color:rgba(231,241,249,.55)"><span>${R.min}</span><span>${R.max}</span></div>
   ${R.revealed
     ?`<div class="disp mt-5" style="font-size:clamp(30px,4vw,58px)">JAWABAN: ${R.answer}</div>`
-    :`<div class="mono mt-5 text-[15px] font-bold" style="color:rgba(245,241,232,.7)">Rata-rata tebakan ${R.avg} — tekan REVEAL untuk membuka jawaban</div>`}
-  ${(R.winners&&R.winners.length)?`<div class="mt-5"><div class="mono text-[11px] tracking-[.2em] font-bold mb-2" style="color:rgba(245,241,232,.6)">TERDEKAT (±${R.tol})</div>
+    :`<div class="mono mt-5 text-[15px] font-bold" style="color:rgba(231,241,249,.7)">Rata-rata tebakan ${R.avg} — tekan REVEAL untuk membuka jawaban</div>`}
+  ${(R.winners&&R.winners.length)?`<div class="mt-5"><div class="mono text-[11px] tracking-[.2em] font-bold mb-2" style="color:rgba(231,241,249,.6)">TERDEKAT (±${R.tol})</div>
     <div class="flex flex-wrap justify-center gap-2">${R.winners.map(w=>`<span class="pname">${w.name} · ${w.value}</span>`).join('')}</div></div>`:''}
  </div>`;
 }
@@ -247,13 +247,13 @@ function paintCloud(R){
  $('stage').innerHTML=cs.length?`<div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-center">`+
  cs.map((c,i)=>{const sc=c.count/max,fs=Math.round(20+Math.pow(sc,.8)*118),op=.55+sc*.45;
  return `<span class="w" onclick="hide('${esc(c.text)}')" title="${c.count} suara" style="font-size:${fs}px;color:${PALETTE[i%PALETTE.length]};opacity:${op}">${c.text}</span>`;}).join('')+`</div>`
- :'<div class="text-xl font-bold text-center" style="color:rgba(245,241,232,.4)">Menunggu suara pertama…</div>';
+ :'<div class="text-xl font-bold text-center" style="color:rgba(231,241,249,.4)">Menunggu suara pertama…</div>';
  $('bars').innerHTML=(R.clusters||[]).slice(0,8).map((c,i)=>{const pct=Math.round(c.count/max*100);
- return `<div class="bar-row" onclick="hide('${esc(c.text)}')"><span class="mono text-[12px] font-bold" style="min-width:26px;color:rgba(245,241,232,.55)">${String(i+1).padStart(2,'0')}</span><span class="font-bold text-[15px]" style="min-width:150px">${c.text}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${PALETTE[i%PALETTE.length]}"></div></div><span class="mono text-[13px] font-bold" style="min-width:44px;text-align:right">×${c.count}</span></div>`;}).join('');
+ return `<div class="bar-row" onclick="hide('${esc(c.text)}')"><span class="mono text-[12px] font-bold" style="min-width:26px;color:rgba(231,241,249,.55)">${String(i+1).padStart(2,'0')}</span><span class="font-bold text-[15px]" style="min-width:150px">${c.text}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${PALETTE[i%PALETTE.length]}"></div></div><span class="mono text-[13px] font-bold" style="min-width:44px;text-align:right">×${c.count}</span></div>`;}).join('');
 }
 function paintChoice(d,R){
  const t=R.tally||[], tot=R.total||0;
- $('stage').innerHTML=(tot?`<div class="max-w-3xl mx-auto">`:'<div class="max-w-3xl mx-auto"><div class="text-xl font-bold text-center" style="color:rgba(245,241,232,.4)">Menunggu suara pertama…</div>')+
+ $('stage').innerHTML=(tot?`<div class="max-w-3xl mx-auto">`:'<div class="max-w-3xl mx-auto"><div class="text-xl font-bold text-center" style="color:rgba(231,241,249,.4)">Menunggu suara pertama…</div>')+
  t.map((o,i)=>{const bg=(d.reveal&&o.correct)?'#4ADE80':PALETTE[i%PALETTE.length];
  return `<div class="flex items-center gap-3 py-2"><span class="bigletter" style="color:${bg}">${o.id}</span>
  <div class="flex-1"><div class="font-bold text-lg mb-1">${o.text} ${(d.reveal&&o.correct)?' ✓':''}</div>
@@ -266,16 +266,16 @@ function paintQa(R){
  const items=R.items||[];
  $('stage').innerHTML=items.length?`<div class="max-w-3xl mx-auto">`+items.slice(0,12).map((it,i)=>
  `<div class="qarow"><span class="qavotes">▲${it.votes}</span><span class="font-bold ${i===0?'':' '}" style="font-size:${i===0?'26px':'19px'}">${it.text}</span></div>`).join('')+`</div>`
- :'<div class="text-xl font-bold text-center" style="color:rgba(245,241,232,.4)">Belum ada pertanyaan masuk…</div>';
+ :'<div class="text-xl font-bold text-center" style="color:rgba(231,241,249,.4)">Belum ada pertanyaan masuk…</div>';
  $('bars').innerHTML=items.slice(0,10).map((it,i)=>`<div class="bar-row"><span class="mono text-[12px] font-bold">▲${it.votes}</span><span class="font-bold text-[15px] flex-1">${it.text}</span></div>`).join('');
 }
 function paintHundred(R){
  const a=R.avg||[];
- $('stage').innerHTML=(R.total?`<div class="max-w-3xl mx-auto">`:'<div class="max-w-3xl mx-auto"><div class="text-xl font-bold text-center" style="color:rgba(245,241,232,.4)">Belum ada yang membagi poin…</div>')+
+ $('stage').innerHTML=(R.total?`<div class="max-w-3xl mx-auto">`:'<div class="max-w-3xl mx-auto"><div class="text-xl font-bold text-center" style="color:rgba(231,241,249,.4)">Belum ada yang membagi poin…</div>')+
  a.map((o,i)=>`<div class="flex items-center gap-3 py-2"><span class="font-bold text-lg" style="min-width:170px">${o.text}</span>
  <div class="bar-track"><div class="bar-fill" style="width:${o.avg}%;background:${PALETTE[i%PALETTE.length]}">${o.avg>10?o.avg:''}</div></div>
  <span class="mono font-bold" style="min-width:40px;text-align:right">${o.avg}</span></div>`).join('')+`</div>
- <div class="mono text-center text-[12px] mt-3" style="color:rgba(245,241,232,.55)">RATA-RATA DARI ${R.total} PENJAWAB • TOTAL SELALU 100</div>`;
+ <div class="mono text-center text-[12px] mt-3" style="color:rgba(231,241,249,.55)">RATA-RATA DARI ${R.total} PENJAWAB • TOTAL SELALU 100</div>`;
  $('bars').innerHTML=a.map(o=>`<div class="bar-row"><span class="font-bold text-[15px] flex-1">${o.text}</span><span class="mono font-bold">${o.avg} poin rata-rata</span></div>`).join('');
 }
 function paintBoard(d){

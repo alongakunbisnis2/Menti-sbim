@@ -42,7 +42,7 @@
 /* --- pernak-pernik sekali pakai (dibuat & dihapus oleh JS) --- */
 .sbim-confetti{position:fixed;left:0;top:0;width:9px;height:13px;border-radius:2px;pointer-events:none;z-index:9999;will-change:transform,opacity;animation:sbim-jatuh 1.6s cubic-bezier(.2,.7,.4,1) forwards}
 .sbim-emosi{position:fixed;left:0;top:0;font-size:30px;line-height:1;pointer-events:none;z-index:9999;will-change:transform,opacity;animation:sbim-emosi 1.5s ease-out forwards}
-.sbim-cap{position:fixed;pointer-events:none;z-index:9999;font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:.06em;color:var(--accent);border:4px solid var(--accent);border-radius:12px;padding:6px 16px;background:rgba(253,248,241,.93);animation:sbim-cap .5s cubic-bezier(.2,1.3,.4,1) both}
+.sbim-cap{position:fixed;pointer-events:none;z-index:9999;font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:.06em;color:var(--accent);border:4px solid var(--accent);border-radius:12px;padding:6px 16px;background:rgba(255,255,255,.93);animation:sbim-cap .5s cubic-bezier(.2,1.3,.4,1) both}
 
 /* --- pita berjalan di bawah layar presenter --- */
 .sbim-ticker-live{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--paper);overflow:hidden;white-space:nowrap;z-index:40;font-size:11px;padding:7px 0;opacity:.95}

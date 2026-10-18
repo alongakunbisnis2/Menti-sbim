@@ -7,11 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--paper:#F4EADF;--ink:#3A2C1C;--accent:#C62A2A;--yellow:#E9A73C;--green:#5F7A3F;--card:#FDF8F1;--brown:#5A462E;--blue:#4296C6;--cyan:#96C6D2;--sage:#A2AE7E}
+:root{--paper:#E9F2FA;--ink:#082B45;--accent:#00A0E2;--yellow:#FFD400;--green:#149E6E;--card:#FFFFFF;--brown:#4A6A80;--blue:#0B7FB8;--cyan:#9CD4EE;--sage:#A8C6D8}
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:'Archivo',sans-serif;-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;
-background-image:radial-gradient(rgba(58,44,28,.13) 1px,transparent 1px);background-size:22px 22px;
+background-image:radial-gradient(rgba(8,43,69,.13) 1px,transparent 1px);background-size:22px 22px;
 mask-image:linear-gradient(#000,transparent 75%)}
 .grain{position:fixed;inset:0;pointer-events:none;opacity:.06;z-index:50;
 background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E")}
@@ -25,7 +25,7 @@ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/sv
 .btn{display:block;text-align:center;font-weight:800;border:2px solid var(--ink);border-radius:12px;padding:14px;box-shadow:4px 4px 0 var(--ink);transition:transform .08s,box-shadow .08s;cursor:pointer;user-select:none}
 .btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)}
 .btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
-.btn-red{background:var(--accent);color:#fff}
+.btn-red{background:var(--accent);color:var(--ink)}
 .btn-ink{background:var(--ink);color:var(--paper)}
 .field{width:100%;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:13px 15px;font-size:15px;outline:none}
 .field:focus{box-shadow:4px 4px 0 var(--yellow)}
