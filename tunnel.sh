@@ -124,7 +124,7 @@ publish(){
   fi
   echo 0 > $CURFAIL
   log "URL aktif: $(cat .public_url)"
-  setsid -f nohup bash deploy-surge.sh >/dev/null 2>&1   # sinkron ke Surge
+  setsid -f nohup bash deploy-pages.sh >/dev/null 2>&1   # sinkron ke Surge
 }
 
 log "tunnel keeper (dual) start"
@@ -135,9 +135,9 @@ while true; do
   ensure_pg
   publish
   n=$((n+1))
-  # segarkan Surge tiap ~6 menit (jaga daftar kandidat backend tetap baru)
-  if [ $((n % 18)) -eq 0 ]; then
-    setsid -f nohup bash deploy-surge.sh >/dev/null 2>&1
+  # terbitkan ulang GitHub Pages tiap ~10 menit (jaga daftar kandidat backend tetap baru)
+  if [ $((n % 30)) -eq 0 ]; then
+    setsid -f nohup bash deploy-pages.sh >/dev/null 2>&1
   fi
   sleep 20
 done

@@ -7,3 +7,9 @@ surge/
 .public_url.dead
 .surge-old-token
 public/config.js
+.surge-pass
+*.bak
+*.bak2
+public/logo-ubaya.png
+public/logo-fbe.png
+pages-deploy.log
