@@ -43,7 +43,7 @@ a{color:inherit}
 .sbim-chip{display:inline-flex;align-items:center;background:var(--paper);border:2px solid var(--ink);border-radius:9px;padding:3px 7px}
 .sbim-word{color:var(--brown);letter-spacing:0}
 </style>
-<script src="/Menti-sbim/config.js?v=1792336180"></script>
+<script src="/Menti-sbim/config.js?v=1792338883"></script>
 </head>
 <body>
 <div class="grain"></div>
@@ -81,7 +81,21 @@ a{color:inherit}
 <div class="absolute -top-3 left-5"><span class="sticker mono text-[11px] font-bold">PANITIA</span></div>
 <div class="mono text-[11px] tracking-[.25em] font-bold mt-2">BUAT SESI BARU</div>
 <label class="mono text-[11px] font-bold block mt-4 mb-1.5">PERTANYAAN — 1 BARIS = 1 SOAL</label>
-<textarea id="q" rows="3" placeholder="Tulis soalmu di sini &#10;- satu soal per baris, boleh beberapa &#10;- kosongkan lalu tekan CETAK bila ingin soal bawaan" class="field font-medium" style="resize:vertical"></textarea>
+<textarea id="q" rows="3" placeholder="Tulis soalmu di sini &#10;- satu soal per baris, boleh beberapa &#10;- kosongkan lalu tekan CETAK bila ingin soal bawaan" class="field font-medium" style="resize:vertical" oninput="ringkasSoal()"></textarea>
+<div class="mono text-[11px] mt-2" id="hintQ" style="color:var(--brown)">(kosong — akan dibuat 1 wordcloud bawaan)</div>
+<details class="mt-2 rule pt-2 pb-2">
+<summary class="mono text-[11px] font-bold cursor-pointer">TIPE SOAL — CARA NULISNYA</summary>
+<div class="text-[13px] mt-2 leading-relaxed" style="color:var(--brown)">
+Tanda <b>[…]</b> di awal baris menentukan tipe soal. Tanpa tanda = wordcloud.<br>
+<div class="mono text-[12px] mt-2" style="white-space:pre-wrap">[p] Siapa pendiri SBIM? | Nama A | Nama B | Nama C
+[k] Kepanjangan SBIM? | *School of Business Innovation and Management | Nama lain
+[100] Seberapa yakin kamu? | Tidak | Sangat
+[skala] Seberapa seru sesi ini? | Biasa | Luar biasa
+[rank] Urutkan prioritasmu | Inovasi | Kolaborasi | Disiplin
+[tebak] Berapa peserta hari ini? | 50 | 5
+[tanya] Ada pertanyaan?</div>
+Bagi dengan tanda <b>|</b> (bagian pertama = pertanyaan, sisanya = pilihan). Tanda <b>*</b> menandai jawaban benar untuk <b>[k]</b>. Untuk <b>[tebak]</b>: jawaban lalu toleransi. <b>[tanya]</b> = tanya-jawab + upvote.</div>
+</details>
 <button onclick="buat()" id="btnBuat" class="btn btn-red w-full mt-3">CETAK KODE + QR →</button>
 <button onclick="pakaiTemplate()" id="btnTpl" class="btn w-full mt-2 bg-white" style="font-size:14px">★ PAKAI 7 SOAL SBIM CAMP</button>
 <div class="border-t-2 border-dashed border-neutral-300 my-5"></div>
@@ -150,12 +164,39 @@ function showError(msg){
  $('out').scrollIntoView({behavior:'smooth'});
 }
 function bacaSoal(){ return $('q').value.split('\n').map(s=>s.trim()).filter(Boolean); }
+// ---- pengurai tipe soal: [p] [k] [100] [skala] [rank] [tebak] [tanya] ----
+const KIND_ALIAS={p:'choice',pilihan:'choice',pilgan:'choice',k:'quiz',kuis:'quiz','100':'hundred',seratus:'hundred',skala:'scale',scale:'scale',rank:'rank',ranking:'rank',peringkat:'rank',tebak:'guess',angka:'guess',tanya:'qa',qa:'qa',t:'qa',awan:'cloud',cloud:'cloud'};
+const KIND_NAMA={choice:'pilgan',quiz:'kuis',hundred:'seratus',scale:'skala',rank:'ranking',guess:'tebak angka',qa:'tanya-jawab',cloud:'wordcloud'};
+function keQ(baris){
+ const m=String(baris).match(/^\[([^\]]{1,12})\]\s*(.+)$/s);
+ if(!m) return baris;
+ const kind=KIND_ALIAS[m[1].trim().toLowerCase()];
+ const isi=m[2].trim();
+ if(!kind||kind==='cloud') return isi;
+ const bagi=isi.split('|').map(s=>s.trim()).filter(Boolean);
+ const text=bagi.shift()||'Soal';
+ if(kind==='qa') return {text,kind};
+ if(kind==='guess'){const a=Number(bagi[0]);if(!Number.isFinite(a))return text;
+  return {text,kind,config:{answer:a,tolerance:Math.max(0,Number(bagi[1])||0)}};}
+ if(bagi.length<2) return text; // pilihan kurang dari 2 → kembali jadi wordcloud
+ if(kind==='hundred') return {text,kind,config:{low:bagi[0]||'',high:bagi[1]||''}};
+ if(kind==='scale'){const mx=Number(bagi[2]);
+  return {text,kind,config:{low:bagi[0]||'',high:bagi[1]||'',max:Number.isFinite(mx)?Math.min(10,Math.max(2,mx)):5}};}
+ return {text,kind,options:bagi.map(o=>({text:o.replace(/^\*/,'').trim(),correct:o.startsWith('*')}))};
+}
+function ringkasSoal(){
+ const lines=$('q').value.split('\n').map(s=>s.trim()).filter(Boolean);
+ const h=$('hintQ'); if(!h) return;
+ if(!lines.length){h.textContent='(kosong — akan dibuat 1 wordcloud bawaan)';return;}
+ const c={}; lines.forEach(l=>{const q=keQ(l),k=typeof q==='string'?'cloud':q.kind;c[k]=(c[k]||0)+1;});
+ h.textContent=lines.length+' soal · '+Object.keys(c).map(k=>c[k]+' '+KIND_NAMA[k]).join(' · ')+(lines.some(l=>/\[[^\]]+\]/.test(l))?'':' — tambah tanda [p] untuk pilgan');
+}
 async function buat(){
  await pickBackend();
  const b=$('btnBuat'),old=b.textContent;b.textContent='MENCETAK…';b.disabled=true;
  try{
- const lines=$('q').value.split('\n').map(s=>s.trim()).filter(Boolean);
- const body = lines.length>1 ? {questions:lines, base:APP_BASE} : {question:lines[0]||'Apa pendapatmu?', base:APP_BASE};
+ const lines=$('q').value.split('\n').map(s=>s.trim()).filter(Boolean).map(keQ);
+ const body = {questions: lines.length ? lines : ['Apa pendapatmu?'], base:APP_BASE};
  const r=await fetch(BACKEND+'/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
  if(!r.ok) throw 0;
  showSession(await r.json());
@@ -170,7 +211,7 @@ async function pakaiTemplate(){
  let tplQs=[];
  try{
  const t=await(await fetch('/templates/sbim-camp.json?v='+Date.now())).json();
- tplQs=[...bacaSoal(), ...(t.questions||[]).map(q=>typeof q==='string'?q:(q.text||''))].filter(Boolean);
+ tplQs=[...bacaSoal().map(keQ), ...(t.questions||[]).map(q=>typeof q==='string'?q:{text:q.text,kind:q.kind,options:q.options||[],config:q.config||{}})].filter(Boolean);
  const r=await fetch(BACKEND+'/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({questions:tplQs, base:APP_BASE})});
  if(!r.ok) throw 0;
  showSession(await r.json());
