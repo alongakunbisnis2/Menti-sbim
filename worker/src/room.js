@@ -74,9 +74,13 @@ export class Room {
       const pasangan = new WebSocketPair();
       const client = pasangan[0], server = pasangan[1];
       await this.boot(code, null);
-      const nama = url.searchParams.get("name") || "", pid = url.searchParams.get("pid") || "";
+      const nama = url.searchParams.get("name") || "";
+      const pid = (url.searchParams.get("pid") || "").trim() || ("ws-" + Math.random().toString(36).slice(2, 8));
       this.remember(pid, nama);
       this.ctx.acceptWebSocket(server);              // API hibernasi: tanpa biaya durasi saat diam
+      // identitas wajib disimpan DI SOCKET-nya. Tanpa ini semua peserta memakai pid yang sama,
+      // sehingga pembatas "1 jawaban / 3 detik" berlaku untuk seluruh ruangan, bukan per orang.
+      try { server.serializeAttachment({ pid, name: nama }); } catch (e) {}
       const s0 = this.state();
       if (s0) this.kirim(server, "room:update", s0);
       this.broadcast();
@@ -154,7 +158,12 @@ export class Room {
   async webSocketMessage(ws, pesan) {
     let msg; try { msg = JSON.parse(typeof pesan === "string" ? pesan : new TextDecoder().decode(pesan)); } catch (e) { return; }
     const b = msg.d || {}, ev = msg.e;
-    const pid = b.pid || ("ws-" + (ws.deserializeAttachment?.()?.pid || "x"));
+    const att = (() => { try { return ws.deserializeAttachment?.() || {}; } catch (e) { return {}; } })();
+    let pid = String(b.pid || att.pid || "").trim();
+    if (!pid) {                                    // cadangan: tetap unik per socket (bukan "ws-x" bersama)
+      pid = "ws-" + Math.random().toString(36).slice(2, 8);
+      try { ws.serializeAttachment({ ...att, pid }); } catch (e) {}
+    }
     if (b.code) this.code = String(b.code).toUpperCase();
     if (b.name) this.remember(pid, b.name);
     const balas = (e, d) => this.kirim(ws, e, d);
