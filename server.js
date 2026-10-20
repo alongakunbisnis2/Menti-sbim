@@ -47,6 +47,7 @@ const rememberName = (code, pid, name) => {
   people.get(code).set(pid || "x", String(name).slice(0, 24));
 };
 const nameList = (code) => [...new Set([...((people.get(String(code || "").toUpperCase()) || new Map()).values())])];
+const namaDari = (code, pid) => ((people.get(String(code || "").toUpperCase()) || new Map()).get(pid || "x")) || "";
 const wsRooms = new Map(); // code -> Set(ws): klien WebSocket asli (protokol sama dgn versi Cloudflare)
 const countIn = (code) => {
   const c = String(code || "").toUpperCase();
@@ -142,8 +143,8 @@ app.post("/api/rooms/:code/answers", (req, res) => {
   if (!room) return res.status(404).json({ error: "Not found" });
   const kind = room.questions[room.qIndex].kind;
   const r = (kind === "qa")
-    ? R.submitText(req.params.code, req.body.text, pidOf(req, req.body), "qa")
-    : R.submitText(req.params.code, req.body.text, pidOf(req, req.body), "cloud");
+    ? R.submitText(req.params.code, req.body.text, pidOf(req, req.body), "qa", req.body.name)
+    : R.submitText(req.params.code, req.body.text, pidOf(req, req.body), "cloud", req.body.name);
   if (r.error) return res.status(429).json({ error: r.error });
   res.json(emit(r.room.code));
 });
@@ -202,13 +203,13 @@ io.on("connection", (socket) => {
     const room = R.getRoom(b.code);
     if (!room) return socket.emit("answer:error", "Kode tidak ditemukan");
     const kind = room.questions[room.qIndex].kind;
-    const r = R.submitText(b.code, b.text, spid(b), kind === "qa" ? "qa" : "cloud");
+    const r = R.submitText(b.code, b.text, spid(b), kind === "qa" ? "qa" : "cloud", b.name || socket.data.name || namaDari(b.code, spid(b)));
     if (r.error) return socket.emit("answer:error", r.error);
     emit(r.room.code);
   });
   socket.on("participant:vote", (b = {}) => {
     rememberName(b.code, b.pid, b.name);
-    const r = R.voteChoice(b.code, { optionId: b.optionId, pid: spid(b), name: b.name });
+    const r = R.voteChoice(b.code, { optionId: b.optionId, pid: spid(b), name: b.name || socket.data.name || namaDari(b.code, spid(b)) });
     if (r.error) return socket.emit("answer:error", r.error);
     socket.emit("vote:scored", { score: r.score });
     emit(r.room.code);
@@ -315,12 +316,12 @@ wss.on("connection", (ws, req) => {
         const room = R.getRoom(code);
         if (!room) return balas("answer:error", "Kode tidak ditemukan");
         const kind = room.questions[room.qIndex].kind;
-        r = R.submitText(code, b.text, pid, kind === "qa" ? "qa" : "cloud");
+        r = R.submitText(code, b.text, pid, kind === "qa" ? "qa" : "cloud", b.name || namaDari(code, pid));
         if (r.error) return balas("answer:error", r.error);
         return void emit(r.room.code);
       }
       case "participant:vote": {
-        r = R.voteChoice(code, { optionId: b.optionId, pid, name: b.name });
+        r = R.voteChoice(code, { optionId: b.optionId, pid, name: b.name || namaDari(code, pid) });
         if (r.error) return balas("answer:error", r.error);
         balas("vote:scored", { score: r.score });
         return void emit(r.room.code);

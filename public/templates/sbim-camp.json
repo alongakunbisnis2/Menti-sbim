@@ -6,7 +6,7 @@
       "kind": "cloud"
     },
     {
-      "text": "Kata apa yang terbenak pertama kali ketika mendengar kata “SBIM”?",
+      "text": "Kata-kata apa yang terbenak di pikiran pertama kali ketika mendengar kata “SBIM”?",
       "kind": "cloud"
     },
     {
@@ -14,17 +14,17 @@
       "kind": "quiz",
       "options": [
         {
+          "text": "School of Business Incredible and Management"
+        },
+        {
+          "text": "School of Business Innovate and Management"
+        },
+        {
           "text": "School of Business Innovation and Management",
           "correct": true
         },
         {
-          "text": "School of Banking and International Marketing"
-        },
-        {
-          "text": "Surabaya Business Institute of Management"
-        },
-        {
-          "text": "School of Business Informatics and Multimedia"
+          "text": "School of Business Increativity and Management"
         }
       ],
       "config": {
@@ -37,17 +37,17 @@
       "kind": "quiz",
       "options": [
         {
-          "text": "Sekolah bisnis di bawah FBE Ubaya",
+          "text": "Organisasi Manajemen"
+        },
+        {
+          "text": "Jurusan Manajemen",
           "correct": true
         },
         {
-          "text": "Komunitas investor Surabaya"
+          "text": "Komunitas Manajemen"
         },
         {
-          "text": "Turnamen futsal mahasiswa"
-        },
-        {
-          "text": "Aplikasi belajar online"
+          "text": "Club Manajemen"
         }
       ],
       "config": {
@@ -58,25 +58,6 @@
     {
       "text": "Lulus dari SBIM, mau jadi apa?",
       "kind": "cloud"
-    },
-    {
-      "text": "Seberapa yakin kamu bisa membangun bisnis sendiri?",
-      "kind": "scale",
-      "config": {
-        "max": 5,
-        "low": "Belum yakin",
-        "high": "Sangat yakin"
-      }
-    },
-    {
-      "text": "Urutkan prioritas saat memulai usaha (paling penting di atas)",
-      "kind": "rank",
-      "options": [
-        "Validasi masalah pelanggan",
-        "Menyusun tim",
-        "Mencari modal",
-        "Membangun produk"
-      ]
     }
   ]
 }

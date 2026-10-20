@@ -136,7 +136,7 @@ export class Room {
       case "answers": {
         const room = R.getRoom(this.code);
         const kind = room.questions[room.qIndex].kind;
-        const r = R.submitText(this.code, body.text, body.pid || "rest", kind === "qa" ? "qa" : "cloud");
+        const r = R.submitText(this.code, body.text, body.pid || "rest", kind === "qa" ? "qa" : "cloud", body.name);
         if (r.error) return j({ error: r.error }, 429);
         return j(this.emit());
       }
@@ -184,12 +184,14 @@ export class Room {
         const room = R.getRoom(this.code);
         if (!room) return balas("answer:error", "Kode tidak ditemukan");
         const kind = room.questions[room.qIndex].kind;
-        r = R.submitText(this.code, b.text, pid, kind === "qa" ? "qa" : "cloud");
+        const nmA = String(b.name || att.name || this.people.get(pid) || "").trim();
+        r = R.submitText(this.code, b.text, pid, kind === "qa" ? "qa" : "cloud", nmA);
         if (r.error) return balas("answer:error", r.error);
         await this.save(); this.emit(); return;
       }
       case "participant:vote": {
-        r = R.voteChoice(this.code, { optionId: b.optionId, pid, name: b.name });
+        r = R.voteChoice(this.code, { optionId: b.optionId, pid,
+          name: String(b.name || att.name || this.people.get(pid) || "").trim() });
         if (r.error) return balas("answer:error", r.error);
         balas("vote:scored", { score: r.score });
         await this.save(); this.emit(); return;
