@@ -91,7 +91,7 @@ select.field{width:auto}
 <select id="newkind" class="field">
 <option value="cloud">Jawaban singkat</option>
 <option value="choice">Pilihan ganda</option>
-<option value="quiz">Kuis berpoin</option>
+<option value="quiz">Kuis (ada kunci)</option>
 <option value="qa">Tanya jawab + upvote</option>
 <option value="hundred">Bagi 100 poin</option>
 <option value="scale">Skala 1-5 / 1-10</option>
@@ -99,7 +99,7 @@ select.field{width:auto}
 <option value="guess">Tebak angka</option>
 </select>
 <input id="newtimer" type="number" min="0" max="120" value="0" title="Timer detik (kuis)" class="field" style="width:90px" placeholder="detik">
-<input id="newpoints" type="number" min="100" max="5000" step="100" value="1000" title="Poin dasar (kuis)" class="field" style="width:110px" placeholder="poin">
+<input id="newpoints" type="hidden" value="0">
 </div>
 <div class="flex flex-wrap gap-2 mb-2">
 <input id="newans" type="number" step="any" class="field" style="width:120px" placeholder="jwb (tebak)">
@@ -119,10 +119,6 @@ select.field{width:auto}
 <div class="board mt-4 px-5 py-4">
 <div class="mono text-[11px] tracking-[.25em] font-bold mb-1" style="color:rgba(231,241,249,.6)">RINCIAN <span class="normal-case tracking-normal font-medium">(klik bar untuk sembunyikan)</span></div>
 <div id="bars"></div>
-</div>
-<div id="boardwrap" class="board mt-4 px-5 py-4" style="display:none">
-<div class="mono text-[11px] tracking-[.25em] font-bold mb-1" style="color:var(--yellow)">PAPAN SKOR KUIS</div>
-<div id="board"></div>
 </div>
 </div>
 
@@ -253,14 +249,34 @@ function paintCloud(R){
 }
 function paintChoice(d,R){
  const t=R.tally||[], tot=R.total||0;
- $('stage').innerHTML=(tot?`<div class="max-w-3xl mx-auto">`:'<div class="max-w-3xl mx-auto"><div class="text-xl font-bold text-center" style="color:rgba(231,241,249,.4)">Menunggu suara pertama…</div>')+
+ let ringkas='';
+ if(d.kind==='quiz' && (d.showResults||d.locked) && tot>0){
+  const benar=t.filter(o=>o.correct).reduce((a,o)=>a+(o.count||0),0);
+  const salah=Math.max(0,tot-benar), pb=Math.round(benar/tot*100), ps=100-pb;
+  ringkas=`<div class="max-w-3xl mx-auto mb-5">
+   <div class="mono text-[11px] tracking-[.22em] font-bold mb-2" style="color:rgba(231,241,249,.6)">HASIL SESI INI — BENAR vs SALAH</div>
+   <div class="flex gap-3">
+    <div style="flex:${Math.max(benar,1)};border:2px solid #3DDC84;border-radius:14px;padding:10px 16px">
+     <div class="mono text-[11px] font-bold tracking-[.2em]" style="color:#3DDC84">BENAR</div>
+     <div class="disp" style="font-size:clamp(24px,3vw,44px);color:#3DDC84">${benar}<span style="font-size:.45em"> orang · ${pb}%</span></div>
+    </div>
+    <div style="flex:${Math.max(salah,1)};border:2px solid #FF6A5A;border-radius:14px;padding:10px 16px">
+     <div class="mono text-[11px] font-bold tracking-[.2em]" style="color:#FF6A5A">SALAH</div>
+     <div class="disp" style="font-size:clamp(24px,3vw,44px);color:#FF6A5A">${salah}<span style="font-size:.45em"> orang · ${ps}%</span></div>
+    </div>
+   </div>
+   <div class="flex mt-2.5" style="height:16px;border-radius:8px;overflow:hidden">
+    <div style="width:${pb}%;background:#3DDC84"></div><div style="width:${ps}%;background:#FF6A5A"></div>
+   </div>
+  </div>`;
+ }
+ $('stage').innerHTML=ringkas+(tot?`<div class="max-w-3xl mx-auto">`:'<div class="max-w-3xl mx-auto"><div class="text-xl font-bold text-center" style="color:rgba(231,241,249,.4)">Menunggu suara pertama…</div>')+
  t.map((o,i)=>{const bg=(d.reveal&&o.correct)?'#4ADE80':PALETTE[i%PALETTE.length];
  return `<div class="flex items-center gap-3 py-2"><span class="bigletter" style="color:${bg}">${o.id}</span>
  <div class="flex-1"><div class="font-bold text-lg mb-1">${o.text} ${(d.reveal&&o.correct)?' ✓':''}</div>
  <div class="bar-track"><div class="bar-fill" style="width:${o.pct}%;background:${bg}">${o.pct>12?o.pct+'%':''}</div></div></div>
  <span class="mono font-bold" style="min-width:52px;text-align:right">×${o.count}</span></div>`;}).join('')+`</div>`;
  $('bars').innerHTML=t.map(o=>`<div class="bar-row"><span class="mono text-[12px] font-bold">${o.id}</span><span class="font-bold text-[15px] flex-1">${o.text}</span><span class="mono font-bold">${o.pct}% (×${o.count})</span></div>`).join('');
- paintBoard(d);
 }
 function paintQa(R){
  const items=R.items||[];
@@ -277,12 +293,6 @@ function paintHundred(R){
  <span class="mono font-bold" style="min-width:40px;text-align:right">${o.avg}</span></div>`).join('')+`</div>
  <div class="mono text-center text-[12px] mt-3" style="color:rgba(231,241,249,.55)">RATA-RATA DARI ${R.total} PENJAWAB • TOTAL SELALU 100</div>`;
  $('bars').innerHTML=a.map(o=>`<div class="bar-row"><span class="font-bold text-[15px] flex-1">${o.text}</span><span class="mono font-bold">${o.avg} poin rata-rata</span></div>`).join('');
-}
-function paintBoard(d){
- const w=$('boardwrap');
- if(d.board&&d.board.length){w.style.display='block';
- $('board').innerHTML=d.board.map((b,i)=>`<div class="bar-row"><span class="mono text-[13px] font-bold" style="min-width:30px;color:var(--yellow)">${String(i+1).padStart(2,'0')}</span><span class="font-bold text-[16px] flex-1">${b.name}</span><span class="mono font-bold">${b.score} pts</span></div>`).join('');
- } else w.style.display='none';
 }
 
 // ----- init & actions -----
