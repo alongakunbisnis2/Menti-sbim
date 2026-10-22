@@ -81,6 +81,7 @@ const SB = (() => {
       on: (ev, fn) => ((handlers[ev] = handlers[ev] || []).push(fn)),
       send: (e, d) => { try { if (sock && sock.readyState === 1) sock.send(JSON.stringify({ e, d })); } catch (err) {} },
       close: () => { dead = true; try { sock && sock.close(); } catch (e) {} },
+      reopen: () => { if (dead) return; if (sock && sock.readyState <= 1) return; tries = 0; open(); },
       get open() { return !!sock && sock.readyState === 1; }
     };
   }

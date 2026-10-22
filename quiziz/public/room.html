@@ -46,6 +46,7 @@
         <span><span class="appname" style="font-size:16px">QUIZIZ</span><br><span class="sub">SBIM Camp</span></span>
       </a>
       <div class="spacer"></div>
+      <span class="chip hide" id="chipSambung" style="background:var(--red);border-color:var(--red);color:#fff">terputus…</span>
       <span class="chip" id="chipKode">······</span>
       <span class="chip" id="chipPoin">0 poin</span>
     </div>
@@ -149,10 +150,18 @@ function sambung() {
   $('#tungguInfo').textContent = 'Menyambung…';
   if (sock) sock.close();
   sock = SB.ws(code, 'player', { pid, name: nama });
-  sock.on('__open', () => { sock.send('quiz:join', { nama, pid }); $('#tungguInfo').textContent = 'Tunggu panitia memulai kuis…'; });
-  sock.on('__close', () => { $('#tungguInfo').textContent = 'Menyambung ulang…'; });
+  sock.on('__open', () => {
+    $('#chipSambung').classList.add('hide');
+    sock.send('quiz:join', { nama, pid });
+    $('#tungguInfo').textContent = 'Tunggu panitia memulai kuis…';
+  });
+  sock.on('__close', () => {
+    $('#chipSambung').classList.remove('hide');
+    $('#tungguInfo').textContent = 'Menyambung ulang…';
+  });
   sock.on('quiz:hai', (d) => {
     st = d; pakaiRun(d.run);
+    if (d.status === 'question' && d.aku && d.aku.sudah) terkirim = true;
     if (d.aku) { total = d.aku.total || 0; }
     poinChip(); render();
   });
@@ -244,6 +253,7 @@ function kirim(opt) {
     toast(st.status === 'paused' ? 'Kuis sedang dijeda.' : 'Soal ini sudah ditutup.', true);
     return;
   }
+  if (!sock.open) { toast('Belum tersambung — tunggu sebentar lalu tekan lagi.', true); return; }
   if (terkirim) { toast('Jawabanmu sudah terkirim untuk soal ini.', true); return; }
   dipilih = opt; terkirim = true;
   render();
@@ -275,6 +285,11 @@ function detak() {
 }
 
 function kirimUlang() { if (sock && sock.open) sock.send('quiz:join', { nama, pid }); }
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  if (sock) sock.reopen();
+  if (sock && sock.open) setTimeout(() => sock.send('quiz:sync', {}), 250);
+});
 setInterval(() => { if (sock && sock.open && st && st.status === 'idle') kirimUlang(); }, 20000);
 </script>
 </body>
