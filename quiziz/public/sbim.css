@@ -1,0 +1,174 @@
+/* SBIM Camp — gaya bersama untuk Quiziz & Penilaian.
+   Tanpa framework: tetap tampil walau internet lambat / tanpa CDN. */
+
+:root{
+  --paper:#E9F2FA; --ink:#082B45; --accent:#00A0E2; --yellow:#FFD400;
+  --green:#149E6E; --red:#D93A2B; --card:#FFFFFF; --brown:#4A6A80;
+  --cyan:#9CD4EE; --line:rgba(8,43,69,.16); --muted:#5C7E95;
+  --sans:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'Space Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --disp:'Archivo Black','Archivo',system-ui,sans-serif;
+  --shadow:4px 4px 0 var(--ink);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.45;
+  background-image:radial-gradient(rgba(8,43,69,.13) 1px,transparent 1px);background-size:22px 22px;
+  mask-image:linear-gradient(#000,transparent 80%);z-index:0}
+a{color:inherit}
+img{max-width:100%}
+main,header,footer{position:relative;z-index:1}
+
+/* ---------- tata letak ---------- */
+.wrap{width:min(1180px,100% - 28px);margin:0 auto}
+.narrow{width:min(760px,100% - 28px);margin:0 auto}
+.stack>*+*{margin-top:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row.tight{gap:6px}
+.spread{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:860px){.grid2{grid-template-columns:1fr}}
+
+/* ---------- tipografi ---------- */
+.disp{font-family:var(--disp);line-height:1.05;letter-spacing:-.01em}
+.mono{font-family:var(--mono)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;font-weight:700;color:var(--muted);text-transform:uppercase}
+.muted{color:var(--muted)}
+.center{text-align:center}
+h1,h2,h3{margin:0;font-weight:800}
+h1{font-family:var(--disp);font-size:clamp(26px,4vw,40px)}
+h2{font-size:clamp(20px,2.6vw,26px)}
+h3{font-size:17px}
+.small{font-size:13px}
+.tiny{font-size:11.5px}
+
+/* ---------- kepala halaman ---------- */
+header.top{background:var(--paper);border-bottom:2px solid var(--ink);padding:10px 0;position:sticky;top:0;z-index:20}
+.topbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand img{height:30px;width:auto}
+.brand .appname{font-family:var(--disp);font-size:19px;letter-spacing:.04em}
+.brand .sub{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+.spacer{flex:1}
+
+/* ---------- tombol ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--sans);
+  font-weight:800;font-size:14px;border:2px solid var(--ink);border-radius:11px;padding:10px 15px;
+  background:#fff;color:var(--ink);box-shadow:3px 3px 0 var(--ink);cursor:pointer;
+  transition:transform .07s,box-shadow .07s;text-decoration:none;line-height:1.2;user-select:none}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:3px 3px 0 var(--ink)}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-yellow{background:var(--yellow)}
+.btn-ink{background:var(--ink);color:var(--paper)}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-ghost{background:transparent;box-shadow:none;border-color:var(--line)}
+.btn-ghost:hover{box-shadow:none;border-color:var(--ink);transform:none}
+.btn-block{width:100%;padding:14px}
+.btn-lg{padding:15px 22px;font-size:16px}
+.btn.on{background:var(--yellow)}
+
+/* ---------- form ---------- */
+label.lbl{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+  font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field,select.field,textarea.field{width:100%;background:#fff;border:2px solid var(--ink);
+  border-radius:11px;padding:11px 13px;font-size:15px;font-family:var(--sans);color:var(--ink);outline:none}
+.field:focus{box-shadow:3px 3px 0 var(--yellow)}
+textarea.field{resize:vertical;min-height:90px;line-height:1.5}
+textarea.code{font-family:var(--mono);font-size:13px}
+select.field{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%23082B45' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;padding-right:36px}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+.err{color:var(--red);font-weight:700;font-size:13px}
+
+/* ---------- kartu & penanda ---------- */
+.card{background:var(--card);border:2px solid var(--ink);border-radius:14px;box-shadow:6px 6px 0 var(--ink);padding:18px}
+.card.flat{box-shadow:none}
+.card.dark{background:var(--ink);color:var(--paper)}
+.pad{padding:14px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;
+  font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:2px solid var(--ink);
+  border-radius:999px;padding:3px 10px;background:#fff}
+.tag.yellow{background:var(--yellow)}
+.tag.green{background:var(--green);color:#fff;border-color:var(--green)}
+.tag.red{background:var(--red);color:#fff;border-color:var(--red)}
+.tag.ink{background:var(--ink);color:var(--paper)}
+.codeplate{display:inline-block;font-family:var(--disp);font-size:26px;letter-spacing:.14em;
+  background:var(--yellow);border:2px solid var(--ink);border-radius:10px;padding:3px 12px;
+  box-shadow:3px 3px 0 var(--ink);transform:rotate(-1.2deg)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--green);display:inline-block}
+.dot.off{background:var(--red)}
+
+/* ---------- tabel ---------- */
+.table-wrap{overflow:auto;border:2px solid var(--ink);border-radius:13px;background:#fff}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th{position:sticky;top:0;background:var(--ink);color:var(--paper);text-align:left;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;padding:9px 12px;z-index:1}
+table.t td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:middle}
+table.t tr:hover td{background:rgba(0,160,226,.07)}
+table.t .num{font-family:var(--mono);font-weight:700;text-align:right;white-space:nowrap}
+table.t .rank{font-family:var(--disp);font-size:15px;color:var(--muted)}
+table.t tr.me td{background:rgba(255,212,0,.25)}
+
+/* ---------- garis waktu / daftar ---------- */
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.list li:first-child{border-top:none}
+.bignum{font-family:var(--disp);font-size:20px;min-width:34px;color:var(--muted)}
+
+/* ---------- layar TV ---------- */
+body.tv{background:var(--ink);color:var(--paper);height:100vh;overflow:hidden}
+body.tv::before{opacity:.35;background-image:radial-gradient(rgba(233,242,250,.09) 1px,transparent 1px);background-size:26px 26px}
+body.tv .card{background:rgba(255,255,255,.05);border-color:rgba(233,242,250,.22);box-shadow:none}
+body.tv .muted{color:rgba(233,242,250,.62)}
+body.tv .eyebrow{color:rgba(233,242,250,.62)}
+body.tv .tag{background:transparent;color:var(--paper);border-color:rgba(233,242,250,.4)}
+body.tv h1{color:var(--paper)}
+.tvwrap{height:100vh;display:flex;flex-direction:column;padding:22px;gap:16px}
+.tvhead{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.tvmain{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0}
+.tvbars{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.opt-card{border:3px solid rgba(233,242,250,.3);border-radius:16px;padding:18px 20px;
+  display:flex;align-items:center;gap:14px;font-weight:700;font-size:clamp(16px,2vw,24px);transition:.25s}
+.opt-card .lett{font-family:var(--disp);font-size:clamp(18px,2.2vw,26px);min-width:34px;text-align:center}
+.opt-card.correct{background:var(--green);border-color:var(--green);color:#fff}
+.opt-card.dim{opacity:.35}
+.clock{font-family:var(--disp);font-size:clamp(38px,6vw,72px);line-height:1}
+.clock.warn{color:var(--yellow)}
+
+/* ---------- podium & bar ---------- */
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:14px}
+.pod{flex:0 1 220px;background:rgba(255,255,255,.06);border:2px solid rgba(233,242,250,.25);
+  border-radius:14px 14px 0 0;padding:14px;text-align:center;animation:rise .55s cubic-bezier(.2,1.2,.3,1) both}
+.pod.p1{background:var(--yellow);color:var(--ink);border-color:var(--yellow);min-height:190px}
+.pod.p2{min-height:150px}.pod.p3{min-height:125px}
+.pod .who{font-family:var(--disp);font-size:clamp(16px,2vw,24px);line-height:1.1;word-break:break-word}
+.pod .pts{font-family:var(--mono);font-weight:700;font-size:15px;margin-top:4px}
+.pod .place{font-family:var(--disp);font-size:26px;opacity:.7}
+@keyframes rise{from{opacity:0;transform:translateY(26px) scale(.96)}to{opacity:1;transform:none}}
+.bar{height:12px;background:rgba(8,43,69,.1);border-radius:6px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--accent);border-radius:6px;transition:width .5s cubic-bezier(.2,1,.3,1)}
+body.tv .bar{background:rgba(233,242,250,.15)}
+
+/* ---------- toast & status ---------- */
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;
+  display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+#toast .t{background:var(--ink);color:var(--paper);border:2px solid var(--ink);border-radius:10px;
+  padding:9px 16px;font-weight:700;font-size:14px;box-shadow:4px 4px 0 rgba(8,43,69,.25);
+  animation:tin .25s ease both}
+#toast .t.bad{background:var(--red);border-color:var(--red);color:#fff}
+@keyframes tin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* ---------- layar kunci PIN ---------- */
+.lock{position:fixed;inset:0;background:var(--paper);z-index:80;display:flex;align-items:center;justify-content:center;padding:20px}
+.lock .card{max-width:400px;width:100%}
+
+/* ---------- animasi util ---------- */
+.pop{animation:pop .28s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.flash{animation:flash .5s ease}
+@keyframes flash{0%{background:rgba(255,212,0,.55)}100%{background:transparent}}
+.hide{display:none !important}

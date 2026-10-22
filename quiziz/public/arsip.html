@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arsip Quiziz — SBIM Camp</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/sbim.css">
+</head>
+<body>
+<div class="lock hide" id="lock">
+  <div class="card">
+    <div class="eyebrow">Arsip</div>
+    <h2 class="disp" style="margin:6px 0 4px">Masukkan PIN</h2>
+    <form id="formPin" class="stack">
+      <input class="field mono" id="lockPin" type="password" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="••••••">
+      <div class="err hide" id="lockErr"></div>
+      <button class="btn btn-accent btn-block" type="submit">Buka arsip</button>
+    </form>
+  </div>
+</div>
+
+<header class="wrap" style="padding:18px 0 6px">
+  <div class="topbar">
+    <a class="brand" href="/">
+      <img src="/sbim-logo.svg" alt="SBIM">
+      <span><span class="appname">QUIZIZ</span><br><span class="sub">Arsip</span></span>
+    </a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost" href="/">Panel materi</a>
+  </div>
+</header>
+
+<main class="wrap" style="padding:14px 0 60px">
+  <div class="eyebrow">Riwayat</div>
+  <h1 class="disp" style="font-size:clamp(28px,4vw,44px);margin:6px 0 6px">Arsip kuis</h1>
+  <p class="muted" style="margin:0 0 18px">Setiap kuis yang selesai menyimpan peringkat lengkap dan statistik per soal.</p>
+
+  <div id="galat" class="card hide" style="border-color:var(--red)"></div>
+
+  <div class="table-wrap">
+    <table class="t"><thead><tr>
+      <th style="width:56px">#</th><th>Judul</th><th style="width:90px">Kode</th>
+      <th style="width:110px">Selesai</th><th style="width:86px">Peserta</th><th style="width:70px">Soal</th><th style="width:150px"></th>
+    </tr></thead><tbody id="baris"><tr><td colspan="7" class="small muted">Memuat…</td></tr></tbody></table>
+  </div>
+
+  <section id="detail" class="hide" style="margin-top:22px">
+    <div class="spread" style="margin-bottom:10px">
+      <h2 class="disp" style="font-size:22px;margin:0" id="dJudul">—</h2>
+      <button class="btn btn-ghost" id="tutupDetail" type="button">Tutup</button>
+    </div>
+    <div class="grid2">
+      <div class="table-wrap" style="max-height:60vh">
+        <table class="t"><thead><tr><th style="width:56px">Rank</th><th>Nama</th><th style="width:80px">Benar</th><th style="width:90px">Poin</th></tr></thead>
+        <tbody id="dRank"></tbody></table>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Per soal</div>
+        <ul class="list" id="dSoal"></ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+<script>
+const { $, esc, api, toast, lock, rupiah } = SB;
+const tgl = (ms) => new Date(ms).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+
+async function buka() {
+  try {
+    const c = await api('/api/config');
+    if (c.pin) { const r = await api('/api/pin'); if (!r.ok) { lock(); return; } }
+    lock(true); muat();
+  } catch (e) { galat(e.message); }
+}
+function galat(m) {
+  const el = $('#galat'); el.classList.remove('hide');
+  el.innerHTML = '<b>SERVER TIDAK TERSAMBUNG.</b><br><span class="small muted">' + esc(m || '') + '</span>';
+}
+
+$('#formPin').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  SB.setPin($('#lockPin').value.trim());
+  const r = await api('/api/pin').catch(() => ({ ok: false }));
+  if (!r.ok) { SB.clearPin(); $('#lockErr').classList.remove('hide'); $('#lockErr').textContent = 'PIN salah'; return; }
+  lock(true); muat();
+});
+
+async function muat() {
+  try {
+    const d = await api('/api/arsip?limit=60');
+    const rows = d.daftar || [];
+    $('#baris').innerHTML = rows.length ? rows.map((r) => `<tr>
+      <td class="rank">${r.id}</td>
+      <td><b>${esc(r.judul)}</b></td>
+      <td class="mono">${esc(r.code)}</td>
+      <td class="small">${esc(tgl(r.selesai))}</td>
+      <td class="num">${r.peserta}</td>
+      <td class="num">${r.soal}</td>
+      <td><div class="row tight">
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" data-lihat="${r.id}">Lihat</button>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" data-hapus="${r.id}">Hapus</button>
+      </div></td></tr>`).join('') : '<tr><td colspan="7" class="small muted">Belum ada kuis yang selesai.</td></tr>';
+    document.querySelectorAll('[data-lihat]').forEach((b) => b.onclick = () => lihat(Number(b.dataset.lihat)));
+    document.querySelectorAll('[data-hapus]').forEach((b) => b.onclick = () => hapus(Number(b.dataset.hapus)));
+  } catch (e) { galat(e.message); }
+}
+
+async function lihat(id) {
+  try {
+    const d = await api('/api/arsip/' + id);
+    $('#dJudul').textContent = d.judul + ' · ' + tgl(d.selesai);
+    $('#dRank').innerHTML = (d.ranking || []).map((r) => `<tr>
+      <td class="rank">${r.rank}</td><td><b>${esc(r.name)}</b></td>
+      <td class="num">${r.benar}/${d.soal}</td><td class="num">${esc(rupiah(r.score))}</td></tr>`).join('');
+    $('#dSoal').innerHTML = (d.detail || []).map((s) => `<li>
+      <span class="bignum">${s.no}</span>
+      <div style="flex:1;min-width:0">
+        <b class="small">${esc(s.teks)}</b>
+        <div class="tiny muted">Kunci: ${esc(s.kunci)}. ${esc(s.kunciTeks)}</div>
+      </div>
+      <span class="tag green">${s.benar}</span><span class="tag red">${s.salah}</span>
+    </li>`).join('') || '<li class="small muted">Tidak ada data soal.</li>';
+    $('#detail').classList.remove('hide');
+    $('#detail').classList.add('pop');
+    $('#detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) { toast(e.message, true); }
+}
+
+async function hapus(id) {
+  if (!confirm('Hapus arsip ini? Peringkat dan statistiknya hilang permanen.')) return;
+  try { await api('/api/arsip/' + id + '/hapus', { body: {} }); toast('Arsip dihapus'); muat(); $('#detail').classList.add('hide'); }
+  catch (e) { toast(e.message, true); }
+}
+
+$('#tutupDetail').onclick = () => $('#detail').classList.add('hide');
+buka();
+</script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Panel Host · Quiziz — SBIM Camp</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/sbim.css">
+<style>
+  .hostgrid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
+  @media(max-width:980px){.hostgrid{grid-template-columns:1fr}}
+  .soal{font-family:var(--disp);font-size:clamp(20px,2.6vw,34px);line-height:1.15;margin:0}
+  .pilih{display:flex;align-items:center;gap:12px;border:2px solid var(--ink);border-radius:12px;background:#fff;
+    padding:10px 12px;margin-top:10px;transition:.2s}
+  .pilih .lett{font-family:var(--disp);width:34px;height:34px;display:grid;place-items:center;border-radius:8px;
+    background:var(--paper);border:2px solid var(--ink);flex:0 0 auto}
+  .pilih .isi{flex:1;min-width:0}
+  .pilih .isi b{display:block;font-weight:600;font-size:clamp(14px,1.4vw,18px);line-height:1.25}
+  .pilih .n{font-family:var(--mono);font-weight:700;min-width:38px;text-align:right}
+  .pilih.benar{background:var(--green);border-color:var(--green);color:#fff}
+  .pilih.benar .lett{background:#fff;border-color:#fff;color:var(--green)}
+  .pilih.redup{opacity:.55}
+  .timer{font-family:var(--disp);font-size:clamp(28px,4vw,46px);line-height:1}
+  .timer.warn{color:var(--red)}
+  .qlist{counter-reset:q}
+  .qlist li{counter-increment:q}
+  .qlist li::before{content:counter(q);font-family:var(--mono);color:var(--muted);width:18px;display:inline-block}
+  .mini{max-height:44vh;overflow:auto}
+  .podium{color:var(--paper)}.pod.p1{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="lock hide" id="lock">
+  <div class="card">
+    <div class="eyebrow">Panel host</div>
+    <h2 class="disp" style="margin:6px 0 4px">Masukkan PIN</h2>
+    <form id="formPin" class="stack">
+      <input class="field mono" id="lockPin" type="password" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="••••••">
+      <div class="err hide" id="lockErr"></div>
+      <button class="btn btn-accent btn-block" type="submit">Buka panel</button>
+    </form>
+  </div>
+</div>
+
+<header class="wrap" style="padding:14px 0 4px">
+  <div class="topbar">
+    <a class="brand" href="/">
+      <img src="/sbim-logo.svg" alt="SBIM">
+      <span><span class="appname">QUIZIZ</span><br><span class="sub">Panel host</span></span>
+    </a>
+    <div class="spacer"></div>
+    <span class="tag ink"><span class="mono" style="letter-spacing:.12em" id="kode">------</span></span>
+    <span class="tag" id="statusTag"><span class="dot off"></span> menyambung…</span>
+    <a class="btn btn-ghost" id="keTv" href="#" target="_blank" rel="noopener">Layar TV</a>
+    <a class="btn btn-ghost" href="/">Panel materi</a>
+  </div>
+</header>
+
+<main class="wrap" style="padding:16px 0 70px">
+  <div id="galat" class="card hide" style="border-color:var(--red)"></div>
+
+  <div class="hostgrid">
+    <section>
+      <!-- ===== SIAP ===== -->
+      <div class="card hide" id="panelSiap">
+        <div class="spread">
+          <div>
+            <div class="eyebrow">Siap dijalankan</div>
+            <h1 class="disp" style="font-size:clamp(26px,4vw,40px);margin:6px 0 2px" id="judulSiap">Quiziz</h1>
+            <div class="muted" id="infoSiap"></div>
+          </div>
+          <button class="btn btn-accent btn-lg" id="btnMulai">Mulai kuis →</button>
+        </div>
+        <div class="table-wrap" style="margin-top:16px">
+          <table class="t"><thead><tr><th style="width:46px">#</th><th>Soal</th><th style="width:70px">Detik</th></tr></thead>
+          <tbody id="daftarSoal"></tbody></table>
+        </div>
+        <div class="hint" style="margin-top:10px">Kunci jawaban ditandai hijau. Periksa dulu sebelum menekan Mulai.</div>
+      </div>
+
+      <!-- ===== SOAL ===== -->
+      <div class="card hide" id="panelSoal">
+        <div class="spread" style="margin-bottom:10px">
+          <div class="row tight">
+            <span class="tag yellow" id="nomor">SOAL 1</span>
+            <span class="tag" id="tagFase">berjalan</span>
+            <span class="small muted" id="hitungPeserta"></span>
+          </div>
+          <div class="row tight">
+            <div class="timer" id="jam">20</div>
+            <div class="tiny muted" style="text-align:right">detik<br>tersisa</div>
+          </div>
+        </div>
+        <h2 class="soal" id="tanya">—</h2>
+        <div id="opsi"></div>
+        <div class="bar" style="margin-top:14px"><i id="bar" style="width:100%"></i></div>
+        <div class="spread" style="margin-top:16px">
+          <div class="row tight">
+            <button class="btn btn-yellow" id="btnLewati">Lewati / lanjut →</button>
+            <button class="btn btn-ghost" id="btnJeda">Jeda</button>
+            <button class="btn btn-ghost" id="btnStop">Hentikan</button>
+          </div>
+          <span class="small muted" id="petunjuk"></span>
+        </div>
+      </div>
+
+      <!-- ===== SELESAI ===== -->
+      <div class="card hide" id="panelSelesai">
+        <div class="eyebrow">Kuis selesai</div>
+        <h1 class="disp" style="font-size:clamp(24px,3.4vw,36px);margin:6px 0 16px">Top 3 — <span id="namaAkhir">Quiziz</span></h1>
+        <div class="podium" id="podium" style="background:var(--ink);border-radius:14px;padding:16px"></div>
+        <div class="row" style="margin-top:18px">
+          <button class="btn btn-accent" id="btnUnduh">Unduh CSV</button>
+          <button class="btn btn-ghost" id="btnUlangi">Ulangi kuis ini</button>
+          <a class="btn btn-ghost" href="/">Buat kuis baru →</a>
+        </div>
+      </div>
+    </section>
+
+    <aside class="stack">
+      <div class="card flat center">
+        <div class="eyebrow">Gabung</div>
+        <img id="qr" alt="QR bergabung" style="width:100%;max-width:210px;margin:8px auto 4px" hidden>
+        <div class="mono tiny" id="tautan" style="word-break:break-all"></div>
+        <div class="mono" style="letter-spacing:.16em;font-weight:700;font-size:18px;margin-top:6px" id="kodeKecil"></div>
+      </div>
+      <div class="card">
+        <div class="spread" style="margin-bottom:6px">
+          <h2 class="disp" style="font-size:17px;margin:0">Peringkat sementara</h2>
+          <span class="tag" id="jumlahOrang">0</span>
+        </div>
+        <ul class="list mini" id="top"></ul>
+      </div>
+      <div class="card flat">
+        <div class="eyebrow">Catatan</div>
+        <p class="small muted" style="margin:6px 0 0">Peserta tidak melihat papan skor selama kuis — hanya hasil di akhir. Poin turun dari 1000 ke 500 selama 20 detik; jawaban salah 0.</p>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script src="/app.js"></script>
+<script>
+const { $, esc, api, toast, lock, rupiah } = SB;
+const code = String(new URLSearchParams(location.search).get('code') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+let st = null, link = null, sock = null, polling = null;
+
+if (!code) {
+  $('#galat').classList.remove('hide');
+  $('#galat').innerHTML = '<b>Kode kuis tidak ada.</b> Buka panel dari halaman <a href="/">Panel materi</a>.';
+} else {
+  $('#kode').textContent = code;
+  $('#kodeKecil').textContent = code;
+  $('#keTv').href = '/tv?code=' + code;
+  mulai();
+}
+
+function galat(msg) {
+  const el = $('#galat');
+  el.classList.remove('hide');
+  el.innerHTML = '<b>SERVER TIDAK TERSAMBUNG.</b><br><span class="small muted">' + esc(msg || '') + '</span>';
+}
+
+async function mulai() {
+  try {
+    const c = await api('/api/config');
+    if (c.pin) { const r = await api('/api/pin'); if (!r.ok) { lock(); return; } }
+    lock(true);
+    $('#statusTag').innerHTML = '<span class="dot"></span> tersambung';
+    link = await api('/api/quiz/' + code + '/qr?w=360');
+    $('#tautan').textContent = link.joinUrl.replace(/^https?:\/\//, '');
+    const img = $('#qr'); img.src = link.qr; img.hidden = false;
+    st = await api('/api/quiz/' + code + '?view=host');
+    render();
+    sambung();
+    polling = setInterval(poll, 2000);
+  } catch (e) {
+    if (/PIN/.test(e.message)) { lock(); return; }
+    galat(e.message);
+  }
+}
+
+function sambung() {
+  sock = SB.ws(code, 'host');
+  sock.on('quiz:state', (d) => { st = d; render(); });
+  sock.on('__open', () => { $('#statusTag').innerHTML = '<span class="dot"></span> tersambung'; });
+  sock.on('__close', () => { $('#statusTag').innerHTML = '<span class="dot off"></span> menyambung ulang…'; });
+}
+
+async function poll() {
+  if (!st || st.status === 'idle' || st.status === 'finished') return;
+  try {
+    const d = await api('/api/quiz/' + code + '?view=host');
+    const perlu = d.status !== st.status || d.qIndex !== st.qIndex || d.sudah !== st.sudah;
+    st = d;
+    if (perlu) render(); else { $('#hitungPeserta').textContent = `${st.sudah} / ${st.peserta} menjawab`; }
+  } catch (e) {}
+}
+
+$('#formPin').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  SB.setPin($('#lockPin').value.trim());
+  const r = await api('/api/pin').catch(() => ({ ok: false }));
+  if (r.ok) { lock(true); mulai(); } else { SB.clearPin(); $('#lockErr').classList.remove('hide'); $('#lockErr').textContent = 'PIN salah'; }
+});
+
+function render() {
+  if (!st) return;
+  $('#jumlahOrang').textContent = st.peserta || 0;
+  $('#panelSiap').classList.toggle('hide', st.status !== 'idle');
+  $('#panelSoal').classList.toggle('hide', !(st.status === 'question' || st.status === 'reveal' || st.status === 'paused'));
+  $('#panelSelesai').classList.toggle('hide', st.status !== 'finished');
+
+  if (st.status === 'idle') {
+    $('#judulSiap').textContent = st.judul;
+    $('#infoSiap').textContent = `${st.qTotal} soal · ${st.questions && st.questions[0] ? st.questions[0].limit : 20} detik/soal`;
+    $('#daftarSoal').innerHTML = (st.questions || []).map((q) => `<tr>
+      <td class="rank">${q.no}</td>
+      <td><b>${esc(q.text)}</b><div class="tiny muted">${q.options.map((o) =>
+        o.correct ? `<span class="tag green" style="margin:3px 4px 0 0">${esc(o.text)}</span>` : `<span class="tag" style="margin:3px 4px 0 0">${esc(o.text)}</span>`).join('')}</div></td>
+      <td class="num">${q.limit}</td></tr>`).join('');
+    return;
+  }
+
+  if (st.status === 'finished') {
+    $('#namaAkhir').textContent = st.judul;
+    $('#podium').innerHTML = urutPodium(st.podium || []);
+    gambarTop();
+    return;
+  }
+
+  const q = st.question || { text: '', options: [] };
+  const jml = st.qTotal || 0;
+  $('#nomor').textContent = `SOAL ${(st.qIndex || 0) + 1} / ${jml}`;
+  $('#tanya').textContent = q.text;
+  $('#hitungPeserta').textContent = `${st.sudah || 0} / ${st.peserta || 0} menjawab`;
+  const fase = st.status === 'question' ? 'berjalan' : st.status === 'paused' ? 'dijeda' : 'kunci jawaban';
+  $('#tagFase').textContent = fase;
+  $('#tagFase').className = 'tag ' + (st.status === 'reveal' ? 'green' : st.status === 'paused' ? 'red' : 'yellow');
+  $('#btnJeda').textContent = st.status === 'paused' ? 'Lanjutkan' : 'Jeda';
+  $('#btnJeda').disabled = st.status === 'reveal';
+  $('#btnLewati').disabled = st.status === 'paused';
+  $('#petunjuk').textContent = st.status === 'reveal' ? 'Kunci tampil 5 detik, lalu soal berikutnya otomatis.' :
+    st.status === 'paused' ? 'Waktu berhenti. Tekan Lanjutkan untuk melanjutkan sisa waktu.' : 'Peserta menjawab sekali — tidak bisa diubah.';
+
+  const hit = st.hitung || {};
+  $('#opsi').innerHTML = (q.options || []).map((o) => {
+    const n = hit[o.id] || 0;
+    const kelas = st.status === 'reveal' ? (o.correct ? 'benar' : 'redup') : '';
+    return `<div class="pilih ${kelas}">
+      <div class="lett">${esc(o.id)}</div>
+      <div class="isi"><b>${esc(o.text)}</b></div>
+      <div class="n">${st.status === 'reveal' ? esc(rupiah(n)) : ''}</div>
+    </div>`;
+  }).join('');
+  gambarTop();
+  detak();
+}
+
+function urutPodium(tiga) {
+  const p = [tiga[1], tiga[0], tiga[2]].filter(Boolean);
+  return p.map((r) => `<div class="pod p${r.rank}">
+    <div class="place">#${r.rank}</div>
+    <div class="who">${esc(r.name)}</div>
+    <div class="pts">${esc(rupiah(r.score))}</div>
+  </div>`).join('') || '<div class="small muted">Belum ada peserta.</div>';
+}
+
+function gambarTop() {
+  const rows = (st.top || []).slice(0, 8);
+  $('#top').innerHTML = rows.length ? rows.map((r) => `<li>
+    <span class="bignum">${r.rank}</span>
+    <b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.name)}</b>
+    <span class="mono small">${esc(rupiah(r.score))}</span>
+  </li>`).join('') : '<li class="small muted">Belum ada jawaban.</li>';
+}
+
+let tik = null;
+function detak() {
+  clearInterval(tik);
+  if (!st || !st.deadline) { $('#jam').textContent = '—'; $('#bar').style.width = '0%'; return; }
+  const lim = (st.status === 'reveal' ? 5 : (st.questions && st.questions[st.qIndex] ? st.questions[st.qIndex].limit : 20)) * 1000;
+  const kabar = () => {
+    const sisa = Math.max(0, st.deadline - Date.now());
+    const det = Math.ceil(sisa / 1000);
+    $('#jam').textContent = st.status === 'paused' ? '‖' : det;
+    $('#jam').classList.toggle('warn', det <= 5 && st.status === 'question');
+    $('#bar').style.width = Math.max(0, Math.min(100, (sisa / lim) * 100)) + '%';
+    if (sisa <= 0) clearInterval(tik);
+  };
+  kabar(); tik = setInterval(kabar, 250);
+}
+
+async function aksi(nama, konfirmasi) {
+  if (konfirmasi && !confirm(konfirmasi)) return;
+  try {
+    const r = await api('/api/quiz/' + code + '/' + nama, { body: {} });
+    toast(nama === 'skip' ? 'Dilanjutkan' : nama === 'pause' ? 'Dijeda' : nama === 'resume' ? 'Dilanjutkan' : nama === 'start' ? 'Kuis dimulai' : 'Selesai');
+    if (r.status === 'finished') toast('Kuis selesai — Top 8 tersimpan di arsip');
+    setTimeout(poll, 400);
+  } catch (e) { toast(e.message, true); }
+}
+
+$('#btnMulai').onclick = () => aksi('start');
+$('#btnLewati').onclick = () => aksi('skip');
+$('#btnJeda').onclick = () => aksi(st && st.status === 'paused' ? 'resume' : 'pause');
+$('#btnStop').onclick = () => aksi('stop', 'Hentikan kuis sekarang dan tampilkan hasil akhir?');
+$('#btnUlangi').onclick = () => aksi('start', 'Ulangi kuis ini? Jawaban sebelumnya dihapus.');
+$('#btnUnduh').onclick = async () => {
+  try {
+    const r = await fetch('/api/quiz/' + code + '/export.csv', { headers: { 'x-pin': SB.getPin() } });
+    if (!r.ok) throw new Error('Gagal mengunduh');
+    const b = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b); a.download = 'quiziz-' + code + '.csv'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  } catch (e) { toast(e.message, true); }
+};
+</script>
+</body>
+</html>

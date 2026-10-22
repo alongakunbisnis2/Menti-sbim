@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Penilaian · Panel — SBIM Camp</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/sbim.css">
+<style>
+  .pane{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+  @media(max-width:980px){.pane{grid-template-columns:1fr}}
+  .sesi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  @media(max-width:560px){.sesi{grid-template-columns:1fr 1fr}}
+  .sesi button{font:inherit;font-weight:700;border:2px solid var(--ink);background:#fff;border-radius:11px;
+    padding:10px 8px;cursor:pointer;transition:.15s}
+  .sesi button.on{background:var(--yellow);box-shadow:3px 3px 0 var(--ink);transform:translate(-1px,-1px)}
+  .cepat{display:flex;gap:6px;flex-wrap:wrap}
+  .cepat button{font-family:var(--mono);font-weight:700;border:2px solid var(--ink);background:#fff;
+    border-radius:9px;padding:6px 10px;cursor:pointer;font-size:13px}
+  .cepat button:hover{background:var(--yellow)}
+  .entri{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+  .entri:first-child{border-top:none}
+  .entri .poin{font-family:var(--disp);min-width:58px;text-align:right}
+  .plus{color:var(--green)}.minus{color:var(--red)}
+</style>
+</head>
+<body>
+<div class="lock hide" id="lock">
+  <div class="card">
+    <div class="eyebrow">Panel penilaian</div>
+    <h2 class="disp" style="margin:6px 0 4px">Masukkan PIN</h2>
+    <p class="small muted" style="margin:0 0 12px">Hanya panitia yang boleh mengubah poin.</p>
+    <form id="formPin" class="stack">
+      <input class="field mono" id="lockPin" type="password" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="••••••">
+      <div class="err hide" id="lockErr"></div>
+      <button class="btn btn-accent btn-block" type="submit">Buka panel</button>
+    </form>
+  </div>
+</div>
+
+<header class="wrap" style="padding:16px 0 4px">
+  <div class="topbar">
+    <a class="brand" href="/">
+      <img src="/sbim-logo.svg" alt="SBIM">
+      <span><span class="appname">PENILAIAN</span><br><span class="sub">SBIM Camp</span></span>
+    </a>
+    <div class="spacer"></div>
+    <span class="tag" id="statusTag"><span class="dot off"></span> menyambung…</span>
+    <a class="btn btn-ghost" href="/tv" target="_blank" rel="noopener">Layar TV</a>
+    <button class="btn btn-ghost" id="btnCsv" type="button">Unduh CSV</button>
+  </div>
+</header>
+
+<main class="wrap" style="padding:14px 0 60px">
+  <div class="eyebrow">Input cepat</div>
+  <h1 class="disp" style="font-size:clamp(26px,4vw,40px);margin:6px 0 4px">Catat poin, lihat peringkat.</h1>
+  <p class="muted" style="margin:0 0 18px">Poin menumpuk per nama. Nama baru otomatis dibuat — tidak perlu daftar dulu.</p>
+
+  <div id="galat" class="card hide" style="border-color:var(--red)"></div>
+
+  <div class="pane">
+    <section class="stack">
+      <form class="card" id="fTambah">
+        <div class="grid2">
+          <label class="small"><b>Nama peserta</b>
+            <input class="field" id="nama" list="daftarNama" autocomplete="off" placeholder="Ketik nama…" required>
+            <datalist id="daftarNama"></datalist>
+          </label>
+          <label class="small"><b>Kelompok <span class="muted tiny">(opsional)</span></b>
+            <input class="field" id="kelompok" maxlength="30" placeholder="mis. Kelompok 3" autocomplete="off">
+          </label>
+        </div>
+
+        <div style="margin-top:14px">
+          <div class="small" style="margin-bottom:6px"><b>Sesi</b></div>
+          <div class="sesi" id="sesi">
+            <button type="button" data-sesi="Materi" class="on">Materi</button>
+            <button type="button" data-sesi="Outbound">Outbound</button>
+            <button type="button" data-sesi="Performance">Performance</button>
+            <button type="button" data-sesi="Konten">Konten</button>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:14px">
+          <label class="small"><b>Kegiatan</b>
+            <input class="field" id="kegiatan" list="daftarKegiatan" maxlength="60" placeholder="mis. Aktif tanya jawab" autocomplete="off">
+            <datalist id="daftarKegiatan"></datalist>
+          </label>
+          <label class="small"><b>Poin</b>
+            <input class="field mono" id="poin" type="number" inputmode="numeric" step="1" min="-100000" max="100000" placeholder="50" required>
+          </label>
+        </div>
+        <div class="cepat" style="margin-top:8px">
+          <button type="button" data-poin="10">+10</button>
+          <button type="button" data-poin="25">+25</button>
+          <button type="button" data-poin="50">+50</button>
+          <button type="button" data-poin="100">+100</button>
+          <button type="button" data-poin="-10">−10</button>
+          <span class="tiny muted" style="align-self:center">angka negatif untuk koreksi</span>
+        </div>
+
+        <div style="margin-top:14px">
+          <label class="small"><b>Catatan <span class="muted tiny">(opsional)</span></b>
+            <input class="field" id="catatan" maxlength="120" placeholder="mis. jawaban paling cepat" autocomplete="off">
+          </label>
+        </div>
+
+        <div class="err hide" id="errTambah" style="margin-top:10px"></div>
+        <button class="btn btn-accent btn-block btn-lg" type="submit" id="btnSimpan" style="margin-top:14px">Simpan poin</button>
+      </form>
+
+      <div class="card">
+        <div class="spread" style="margin-bottom:6px">
+          <h2 class="disp" style="font-size:18px;margin:0">Daftar peserta</h2>
+          <span class="tag" id="jmlPeserta">0</span>
+        </div>
+        <p class="small muted" style="margin:0 0 10px">Tempel dari Excel/WhatsApp: satu baris satu peserta, <span class="mono">Nama, Kelompok</span>.</p>
+        <form id="fImport" class="stack">
+          <textarea class="field mono" id="teksImport" rows="5" placeholder="Adi Saputra, Kelompok 1
+Sari Dewi, Kelompok 2"></textarea>
+          <div class="row">
+            <button class="btn btn-ink" type="submit">Import daftar</button>
+            <span class="small muted" id="infoImport"></span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <aside class="stack">
+      <div class="card">
+        <div class="spread" style="margin-bottom:8px">
+          <h2 class="disp" style="font-size:17px;margin:0">Peringkat</h2>
+          <span class="tag yellow" id="totalPoin">0 poin</span>
+        </div>
+        <ul class="list" id="peringkat"></ul>
+      </div>
+      <div class="card">
+        <div class="spread" style="margin-bottom:4px">
+          <h2 class="disp" style="font-size:17px;margin:0">Entri terakhir</h2>
+          <span class="tiny muted">klik ↩ untuk batalkan</span>
+        </div>
+        <div id="entri"></div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script src="/app.js"></script>
+<script>
+const { $, $$, esc, api, toast, lock, rupiah } = SB;
+let st = null, sesi = 'Materi', sock = null;
+
+function galat(m) {
+  const el = $('#galat'); el.classList.remove('hide');
+  el.innerHTML = '<b>SERVER TIDAK TERSAMBUNG.</b><br><span class="small muted">' + esc(m || '') + '</span>';
+}
+
+$('#formPin').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  SB.setPin($('#lockPin').value.trim());
+  const r = await api('/api/pin').catch(() => ({ ok: false }));
+  if (!r.ok) { SB.clearPin(); $('#lockErr').classList.remove('hide'); $('#lockErr').textContent = 'PIN salah'; return; }
+  lock(true); muat();
+});
+
+async function mulai() {
+  try {
+    const c = await api('/api/config');
+    if (c.pin) { const r = await api('/api/pin'); if (!r.ok) { lock(); return; } }
+    lock(true);
+    $('#statusTag').innerHTML = '<span class="dot"></span> tersambung';
+    muat();
+    sambung();
+  } catch (e) { galat(e.message); }
+}
+
+function sambung() {
+  sock = SB.ws('ledger', 'panel');
+  // DO mengabaikan `code` untuk Penilaian; cukup peran panel.
+  sock.on('nilai:update', (d) => {
+    if (d && d.terakhir) { /* siaran dipakai untuk indikator, data lengkap diambil via /api/state */ }
+  });
+  sock.on('__open', () => { $('#statusTag').innerHTML = '<span class="dot"></span> tersambung'; });
+  sock.on('__close', () => { $('#statusTag').innerHTML = '<span class="dot off"></span> menyambung ulang…'; });
+}
+
+async function muat() {
+  try {
+    st = await api('/api/state');
+    $('#jmlPeserta').textContent = st.peserta + ' peserta';
+    $('#totalPoin').textContent = rupiah(st.totalPoin) + ' poin';
+    $('#daftarNama').innerHTML = (st.semua || []).map((p) => `<option value="${esc(p.name)}">${esc(p.kelompok || '')}</option>`).join('');
+    $('#daftarKegiatan').innerHTML = (st.kegiatan || []).filter((k) => k.sesi === sesi)
+      .map((k) => `<option value="${esc(k.nama)}"></option>`).join('');
+    gambarPeringkat(); gambarEntri();
+  } catch (e) {
+    if (/PIN/.test(e.message)) { lock(); return; }
+    galat(e.message);
+  }
+}
+
+function gambarPeringkat() {
+  const rows = (st.top || []).slice(0, 10);
+  $('#peringkat').innerHTML = rows.length ? rows.map((r) => `<li>
+    <span class="bignum">${r.rank}</span>
+    <div style="flex:1;min-width:0">
+      <b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.name)}</b>
+      <span class="tiny muted">${esc(r.kelompok || '—')} · ${r.entri} entri</span>
+    </div>
+    <span class="mono small">${esc(rupiah(r.score))}</span>
+  </li>`).join('') : '<li class="small muted">Belum ada peserta.</li>';
+}
+
+function gambarEntri() {
+  const rows = (st.entri || []).slice(0, 12);
+  $('#entri').innerHTML = rows.length ? rows.map((e) => `<div class="entri">
+    <div style="flex:1;min-width:0">
+      <b class="small" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.nama)}</b>
+      <span class="tiny muted">${esc(e.sesi)} · ${esc(e.kegiatan)}</span>
+    </div>
+    <span class="poin ${e.poin >= 0 ? 'plus' : 'minus'}">${e.poin > 0 ? '+' : ''}${esc(rupiah(e.poin))}</span>
+    <button class="btn btn-ghost" style="padding:3px 8px;font-size:12px" data-hapus="${e.id}" title="Batalkan">↩</button>
+  </div>`).join('') : '<div class="small muted">Belum ada entri.</div>';
+  $$('#entri [data-hapus]').forEach((b) => b.onclick = () => hapus(Number(b.dataset.hapus)));
+}
+
+$$('#sesi button').forEach((b) => b.onclick = () => {
+  sesi = b.dataset.sesi;
+  $$('#sesi button').forEach((x) => x.classList.toggle('on', x === b));
+  $('#daftarKegiatan').innerHTML = (st && st.kegiatan || []).filter((k) => k.sesi === sesi)
+    .map((k) => `<option value="${esc(k.nama)}"></option>`).join('');
+});
+
+$$('.cepat button').forEach((b) => b.onclick = () => {
+  const v = Number($('#poin').value) || 0;
+  $('#poin').value = v + Number(b.dataset.poin);
+  $('#poin').focus();
+});
+
+$('#fTambah').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const btn = $('#btnSimpan');
+  $('#errTambah').classList.add('hide');
+  const nama = $('#nama').value.trim();
+  if (!nama) return;
+  btn.disabled = true; btn.textContent = 'Menyimpan…';
+  try {
+    const r = await api('/api/entri', { body: {
+      nama, kelompok: $('#kelompok').value.trim(), sesi,
+      kegiatan: $('#kegiatan').value.trim(), poin: Number($('#poin').value),
+      catatan: $('#catatan').value.trim(), oleh: 'panitia'
+    }});
+    toast(`${r.nama}: ${r.poin > 0 ? '+' : ''}${rupiah(r.poin)} poin`);
+    $('#poin').value = ''; $('#catatan').value = '';
+    $('#errTambah').classList.add('hide');
+    await muat();
+    $('#poin').focus();
+  } catch (e) {
+    $('#errTambah').textContent = e.message;
+    $('#errTambah').classList.remove('hide');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Simpan poin';
+  }
+});
+
+async function hapus(id) {
+  if (!confirm('Batalkan entri ini?')) return;
+  try { await api('/api/entri/' + id + '/hapus', { body: {} }); toast('Entri dibatalkan'); muat(); }
+  catch (e) { toast(e.message, true); }
+}
+
+$('#fImport').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  try {
+    const r = await api('/api/import', { body: { teks: $('#teksImport').value } });
+    $('#infoImport').textContent = `${r.baru} peserta baru · total ${r.peserta}`;
+    toast(`${r.baru} peserta ditambahkan`);
+    $('#teksImport').value = '';
+    muat();
+  } catch (e) { toast(e.message, true); }
+});
+
+$('#btnCsv').onclick = async () => {
+  try {
+    const r = await fetch('/api/export.csv', { headers: { 'x-pin': SB.getPin() } });
+    if (!r.ok) throw new Error('Gagal mengunduh');
+    const b = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b); a.download = 'penilaian-sbim.csv'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  } catch (e) { toast(e.message, true); }
+};
+
+// Enter di kolom poin = simpan
+$('#poin').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('#fTambah').requestSubmit(); } });
+$('#kegiatan').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('#poin').focus(); } });
+$('#nama').addEventListener('change', (e) => {
+  const p = (st && st.semua || []).find((x) => x.name.toLowerCase() === e.target.value.trim().toLowerCase());
+  if (p && !$('#kelompok').value) $('#kelompok').value = p.kelompok || '';
+});
+
+mulai();
+</script>
+</body>
+</html>

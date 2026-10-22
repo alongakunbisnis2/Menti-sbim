@@ -1,0 +1,21 @@
+name = "quiziz-sbim"
+main = "src/index.js"
+compatibility_date = "2026-10-18"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "../public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[durable_objects.bindings]]
+name = "QUIZ"
+class_name = "Quiz"
+
+[[durable_objects.bindings]]
+name = "ARSIP"
+class_name = "Arsip"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Quiz", "Arsip"]

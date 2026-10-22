@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>Ikut Quiziz — SBIM Camp</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/sbim.css">
+<style>
+  body{min-height:100dvh}
+  .layar{min-height:100dvh;display:flex;flex-direction:column}
+  .isi{flex:1;display:flex;flex-direction:column;justify-content:center;padding:10px 0 26px}
+  .opt{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:#fff;border:2px solid var(--ink);
+    border-radius:14px;padding:14px;margin-top:10px;font:inherit;color:inherit;cursor:pointer;
+    box-shadow:4px 4px 0 rgba(8,43,69,.12);transition:transform .12s,box-shadow .12s,background .2s}
+  .opt:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(8,43,69,.12)}
+  .opt .lett{font-family:var(--disp);flex:0 0 auto;width:38px;height:38px;border:2px solid var(--ink);border-radius:10px;
+    background:var(--paper);display:grid;place-items:center}
+  .opt .txt{flex:1;font-weight:600;line-height:1.25}
+  .opt .n{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .opt.pilih{background:var(--yellow);border-color:var(--ink);box-shadow:4px 4px 0 var(--ink)}
+  .opt.benar{background:var(--green);border-color:var(--green);color:#fff}
+  .opt.benar .lett{background:#fff;color:var(--green);border-color:#fff}
+  .opt.salah{background:var(--red);border-color:var(--red);color:#fff}
+  .opt.salah .lett{background:#fff;color:var(--red);border-color:#fff}
+  .opt.mati{opacity:.4}
+  .opt:disabled{cursor:default}
+  .soal{font-family:var(--disp);font-size:clamp(20px,5.4vw,30px);line-height:1.15;margin:6px 0 4px}
+  .jam{font-family:var(--disp);font-size:30px;line-height:1}
+  .progress{height:10px;background:rgba(8,43,69,.12);border-radius:6px;overflow:hidden;margin-top:10px}
+  .progress>i{display:block;height:100%;background:var(--accent);transition:width .25s linear}
+  .progress>i.warn{background:var(--red)}
+  .chip{font-family:var(--mono);font-size:12px;border:2px solid var(--ink);border-radius:20px;padding:3px 10px;background:#fff}
+  .big{font-family:var(--disp);font-size:clamp(34px,11vw,56px);line-height:1}
+</style>
+</head>
+<body>
+<div class="layar wrap">
+  <header style="padding:12px 0 2px">
+    <div class="topbar">
+      <a class="brand" href="/">
+        <img src="/sbim-logo.svg" alt="SBIM" style="height:26px">
+        <span><span class="appname" style="font-size:16px">QUIZIZ</span><br><span class="sub">SBIM Camp</span></span>
+      </a>
+      <div class="spacer"></div>
+      <span class="chip" id="chipKode">······</span>
+      <span class="chip" id="chipPoin">0 poin</span>
+    </div>
+  </header>
+
+  <main class="isi">
+    <!-- masuk -->
+    <section id="panelMasuk" class="card hide">
+      <div class="eyebrow">Bergabung</div>
+      <h1 class="disp" style="font-size:26px;margin:6px 0 4px">Siapa namamu?</h1>
+      <p class="small muted" style="margin:0 0 12px">Nama ini muncul di layar dan di arsip. Pakai pembeda kalau namamu kembar.</p>
+      <form id="fMasuk" class="stack">
+        <input class="field" id="nama" maxlength="24" autocomplete="name" placeholder="Nama kamu" required>
+        <div class="err hide" id="errMasuk"></div>
+        <button class="btn btn-accent btn-block btn-lg" type="submit">Masuk →</button>
+      </form>
+    </section>
+
+    <!-- menunggu -->
+    <section id="panelTunggu" class="center hide">
+      <div class="eyebrow" id="tungguAtas">Sudah masuk</div>
+      <h1 class="disp" style="font-size:clamp(26px,7vw,38px);margin:8px 0 6px" id="tungguNama">—</h1>
+      <p class="muted" id="tungguInfo">Tunggu panitia memulai kuis…</p>
+      <div class="row" style="justify-content:center;margin-top:14px">
+        <span class="tag"><span class="dot"></span> tersambung</span>
+        <span class="tag" id="tagOrang">0 peserta</span>
+      </div>
+    </section>
+
+    <!-- soal -->
+    <section id="panelSoal" class="hide">
+      <div class="row tight">
+        <span class="tag yellow" id="nomor">SOAL 1</span>
+        <span class="tag" id="tagFase">jawab sekarang</span>
+        <div class="spacer"></div>
+        <div class="jam" id="jam">20</div>
+      </div>
+      <div class="progress"><i id="bar" style="width:100%"></i></div>
+      <h2 class="soal" id="tanya">—</h2>
+      <div id="opsi"></div>
+      <div class="small muted" id="kabar" style="margin-top:12px;min-height:20px"></div>
+    </section>
+
+    <!-- hasil akhir -->
+    <section id="panelAkhir" class="center hide">
+      <div class="eyebrow">Kuis selesai</div>
+      <div class="big" id="angkaAkhir">—</div>
+      <p class="muted" id="kataAkhir">Lihat layar utama untuk papan skor.</p>
+      <div class="row" style="justify-content:center">
+        <a class="btn btn-ghost" href="/">Selesai</a>
+      </div>
+    </section>
+
+    <div id="galat" class="card hide" style="border-color:var(--red);margin-top:14px"></div>
+  </main>
+</div>
+
+<script src="/app.js"></script>
+<script>
+const { $, esc, toast, rupiah } = SB;
+const code = String(new URLSearchParams(location.search).get('code') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+$('#chipKode').textContent = code || '······';
+
+let st = null, sock = null, nama = '', pid = '', total = 0, terkirim = false, dipilih = null, hasil = null, tik = null;
+const K_NAMA = 'qz_nama_' + code, K_PID = 'qz_pid', K_ANS = 'qz_ans_' + code;
+const jawabLokal = () => { try { return JSON.parse(localStorage.getItem(K_ANS) || '{}'); } catch (e) { return {}; } };
+const simpanJawab = (i, data) => { const j = jawabLokal(); j[i] = data; localStorage.setItem(K_ANS, JSON.stringify(j)); };
+
+function galat(msg) {
+  const el = $('#galat'); el.classList.remove('hide');
+  el.innerHTML = '<b>SERVER TIDAK TERSAMBUNG.</b><br><span class="small muted">' + esc(msg || '') + '</span>';
+}
+function tampil(id) {
+  ['panelMasuk', 'panelTunggu', 'panelSoal', 'panelAkhir'].forEach((k) => $('#' + k).classList.toggle('hide', k !== id));
+}
+function poinChip() { $('#chipPoin').textContent = rupiah(total) + ' poin'; }
+
+if (!code) {
+  tampil('panelMasuk'); $('#panelMasuk').classList.add('hide');
+  galat('Kode kuis tidak ada di tautan. Pindai QR dari layar panitia.');
+} else {
+  nama = localStorage.getItem(K_NAMA) || '';
+  pid = localStorage.getItem(K_PID) || '';
+  if (!pid) { pid = 'p' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-3); localStorage.setItem(K_PID, pid); }
+  if (nama) sambung(); else { tampil('panelMasuk'); $('#nama').value = ''; setTimeout(() => $('#nama').focus(), 200); }
+}
+
+$('#fMasuk').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const v = $('#nama').value.trim();
+  if (v.length < 2) { $('#errMasuk').textContent = 'Nama minimal 2 huruf.'; $('#errMasuk').classList.remove('hide'); return; }
+  nama = v.slice(0, 24); localStorage.setItem(K_NAMA, nama);
+  sambung();
+});
+
+function sambung() {
+  tampil('panelTunggu');
+  $('#tungguNama').textContent = nama;
+  $('#tungguInfo').textContent = 'Menyambung…';
+  if (sock) sock.close();
+  sock = SB.ws(code, 'player', { pid, name: nama });
+  sock.on('__open', () => { sock.send('quiz:join', { nama, pid }); $('#tungguInfo').textContent = 'Tunggu panitia memulai kuis…'; });
+  sock.on('__close', () => { $('#tungguInfo').textContent = 'Menyambung ulang…'; });
+  sock.on('quiz:hai', (d) => {
+    st = d;
+    if (d.aku) { total = d.aku.total || 0; }
+    poinChip(); render();
+  });
+  sock.on('quiz:state', (d) => { st = d; render(); });
+  sock.on('quiz:ack', (d) => {
+    terkirim = true; total = d.total || total; poinChip();
+    simpanJawab(st.qIndex, { opt: dipilih, poin: d.poin || 0, benar: !!d.benar });
+    render();
+    if (d.poin > 0) toast('+' + rupiah(d.poin) + ' poin', false);
+  });
+  sock.on('quiz:error', (msg) => {
+    const t = String(msg || '');
+    if (/sudah terkirim/.test(t)) terkirim = true;
+    toast(t, true); render();
+  });
+  sock.on('quiz:aku', (d) => { hasil = d; render(); });
+}
+
+function render() {
+  if (!st) { tampil('panelTunggu'); return; }
+  $('#tagOrang').textContent = (st.peserta || 0) + ' peserta';
+  if (st.status === 'idle') {
+    tampil('panelTunggu');
+    $('#tungguAtas').textContent = 'Sudah masuk';
+    $('#tungguNama').textContent = nama;
+    $('#tungguInfo').textContent = st.judul ? ('Kuis: ' + st.judul + ' — tunggu panitia memulai.') : 'Tunggu panitia memulai kuis…';
+    return;
+  }
+  if (st.status === 'finished') {
+    tampil('panelAkhir');
+    const skor = hasil ? hasil.score : total;
+    $('#angkaAkhir').textContent = rupiah(skor);
+    $('#kataAkhir').textContent = hasil && hasil.rank
+      ? `Peringkat ${hasil.rank} dari ${hasil.total} peserta · ${hasil.benar} jawaban benar. Lihat layar utama untuk papan skor.`
+      : `${rupiah(total)} poin terkumpul. Lihat layar utama untuk papan skor.`;
+    return;
+  }
+  tampil('panelSoal');
+  const q = st.question || { text: '', options: [] };
+  const simpan = jawabLokal()[st.qIndex];
+  if (simpan) { terkirim = true; dipilih = simpan.opt; }
+  else if (st.qIndex !== window.__qIndex) { terkirim = false; dipilih = null; }
+  window.__qIndex = st.qIndex;
+
+  $('#nomor').textContent = `SOAL ${(st.qIndex || 0) + 1} / ${st.qTotal || 0}`;
+  $('#tanya').textContent = q.text;
+  const kunci = st.status === 'reveal' ? st.kunci : null;
+  $('#tagFase').textContent = st.status === 'paused' ? 'dijeda' : st.status === 'reveal' ? 'kunci jawaban' : terkirim ? 'terkirim ✓' : 'jawab sekarang';
+  $('#tagFase').className = 'tag ' + (st.status === 'reveal' ? 'green' : st.status === 'paused' ? 'red' : terkirim ? 'ink' : 'yellow');
+  $('#jam').textContent = st.status === 'paused' ? '‖' : (st.deadline ? Math.max(0, Math.ceil((st.deadline - Date.now()) / 1000)) : '—');
+
+  $('#opsi').innerHTML = (q.options || []).map((o) => {
+    let k = 'opt';
+    if (st.status === 'reveal') {
+      if (o.id === kunci) k += ' benar';
+      else if (o.id === dipilih) k += ' salah';
+      else k += ' mati';
+    } else if (terkirim) {
+      k += o.id === dipilih ? ' pilih' : ' mati';
+    }
+    const n = st.status === 'reveal' && o.count != null ? `<span class="n">${o.count} pilih</span>` : '';
+    return `<button class="${k}" data-opt="${esc(o.id)}" ${(terkirim || st.status !== 'question') ? 'disabled' : ''}>
+      <span class="lett">${esc(o.id)}</span><span class="txt">${esc(o.text)}</span>${n}</button>`;
+  }).join('');
+
+  document.querySelectorAll('#opsi .opt[data-opt]').forEach((b) => {
+    b.onclick = () => kirim(b.dataset.opt);
+  });
+
+  if (st.status === 'reveal') {
+    const simpan2 = jawabLokal()[st.qIndex];
+    $('#kabar').innerHTML = simpan2
+      ? (simpan2.benar ? `Benar! <b>+${esc(rupiah(simpan2.poin))} poin</b>` : (simpan2.opt ? 'Belum tepat — 0 poin.' : 'Kamu tidak menjawab.'))
+      : 'Waktu habis / tidak menjawab — 0 poin.';
+  } else if (terkirim) {
+    $('#kabar').textContent = 'JAWABAN TERKIRIM ✓ — tidak bisa diubah.';
+  } else if (st.status === 'paused') {
+    $('#kabar').textContent = 'Kuis dijeda sejenak.';
+  } else {
+    $('#kabar').textContent = 'Pilih satu jawaban. Benar + cepat = poin lebih besar.';
+  }
+  detak();
+}
+
+function kirim(opt) {
+  if (terkirim || !st || st.status !== 'question') return;
+  dipilih = opt; terkirim = true;
+  render();
+  sock.send('quiz:answer', { optionId: opt });
+}
+
+let tikJam = null, tikBar = null;
+function detak() {
+  clearInterval(tikJam); clearInterval(tikBar);
+  if (!st || !st.deadline) { $('#bar').style.width = '0%'; return; }
+  const lim = (st.status === 'reveal' ? 5 : (st.limit || 20)) * 1000;
+  const kabar = () => {
+    const sisa = Math.max(0, st.deadline - Date.now());
+    $('#jam').textContent = st.status === 'paused' ? '‖' : Math.ceil(sisa / 1000);
+    const w = Math.max(0, Math.min(100, (sisa / lim) * 100));
+    $('#bar').style.width = w + '%';
+    $('#bar').classList.toggle('warn', sisa <= 5000 && st.status !== 'reveal');
+    if (sisa <= 0) clearInterval(tikBar);
+  };
+  kabar(); tikBar = setInterval(kabar, 250);
+}
+
+function kirimUlang() { if (sock && sock.open) sock.send('quiz:join', { nama, pid }); }
+setInterval(() => { if (sock && sock.open && st && st.status === 'idle') kirimUlang(); }, 20000);
+</script>
+</body>
+</html>

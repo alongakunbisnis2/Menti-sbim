@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quiziz · Panel Materi — SBIM Camp</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/sbim.css">
+</head>
+<body>
+<div class="lock hide" id="lock">
+  <div class="card">
+    <div class="eyebrow">Panel materi</div>
+    <h2 class="disp" style="margin:6px 0 4px">Masukkan PIN</h2>
+    <p class="small muted" style="margin:0 0 12px">Hanya panitia yang boleh membuat dan menjalankan kuis.</p>
+    <form id="formPin" class="stack">
+      <input class="field mono" id="lockPin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••••" maxlength="12">
+      <div class="err hide" id="lockErr"></div>
+      <button class="btn btn-accent btn-block" type="submit">Buka panel</button>
+    </form>
+  </div>
+</div>
+
+<header class="wrap" style="padding:18px 0 6px">
+  <div class="topbar">
+    <a class="brand" href="/">
+      <img src="/sbim-logo.svg" alt="SBIM">
+      <span><span class="appname">QUIZIZ</span><br><span class="sub">SBIM Camp</span></span>
+    </a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost" href="/arsip">Arsip</a>
+    <span class="tag" id="statusTag"><span class="dot off"></span> menyambung…</span>
+  </div>
+</header>
+
+<main class="wrap" style="padding:14px 0 60px">
+  <div class="eyebrow">Panel materi</div>
+  <h1 class="disp" style="font-size:clamp(30px,5vw,52px);margin:6px 0 8px">Buat kuis, jalankan, arsipkan.</h1>
+  <p class="muted" style="max-width:62ch;margin:0 0 22px">Soal diketik sekali, dijalankan dari layar ini. Peserta bergabung lewat kode atau QR — tanpa memasang aplikasi.</p>
+
+  <div class="grid2">
+    <section class="card">
+      <div class="spread" style="margin-bottom:12px">
+        <h2 class="disp" style="font-size:22px;margin:0">Kuis baru</h2>
+        <span class="tag yellow">1000 → 500 poin</span>
+      </div>
+      <form id="fBuat" class="stack">
+        <label class="small" for="judul"><b>Judul</b>
+          <input class="field" id="judul" maxlength="60" placeholder="Quiziz Sesi Materi" required>
+        </label>
+        <div class="row">
+          <label class="small" for="limit" style="flex:1"><b>Detik per soal</b>
+            <input class="field mono" id="limit" type="number" min="5" max="120" value="20" required>
+          </label>
+          <div style="flex:2">
+            <div class="small"><b>Status soal</b></div>
+            <div class="hint" id="hitung">Belum ada soal.</div>
+          </div>
+        </div>
+        <label class="small" for="teks"><b>Soal</b>
+          <textarea class="field mono" id="teks" rows="12" spellcheck="false" placeholder="Soal pertama
+Pilihan A
+Pilihan B *
+Pilihan C
+
+Soal kedua | Pilihan A * | Pilihan B"></textarea>
+        </label>
+        <div class="hint">Tulis soal, lalu pilihan di baris berikutnya. Akhiri pilihan yang benar dengan <b>*</b>. Baris kosong memisahkan soal. Bisa juga satu baris: <span class="mono">Soal | A | B* | C</span>.</div>
+        <div class="err hide" id="errBuat"></div>
+        <button class="btn btn-accent btn-block btn-lg" type="submit" id="btnBuat">Buat kuis</button>
+      </form>
+      <div class="hide" id="hasil" style="margin-top:16px">
+        <div class="card flat" style="background:var(--paper)">
+          <div class="eyebrow">Kode kuis</div>
+          <div class="codeplate" id="kodeBaru">------</div>
+          <div class="small muted" id="hasilInfo" style="margin:6px 0 12px"></div>
+          <div class="row">
+            <a class="btn btn-ink" id="keHost" href="#">Buka panel host →</a>
+            <a class="btn btn-ghost" id="keTv" href="#" target="_blank" rel="noopener">Layar TV</a>
+            <button class="btn btn-ghost" id="salin" type="button">Salin tautan peserta</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stack">
+      <div class="card">
+        <div class="spread" style="margin-bottom:8px">
+          <h2 class="disp" style="font-size:20px;margin:0">Di perangkat ini</h2>
+          <span class="tag" id="jmlSaya">0</span>
+        </div>
+        <ul class="list" id="saya"><li class="small muted">Belum ada kuis di perangkat ini.</li></ul>
+      </div>
+      <div class="card flat">
+        <div class="eyebrow">Alur</div>
+        <ol class="small" style="margin:8px 0 0;padding-left:18px;line-height:1.7">
+          <li>Buat kuis → dapat 6 huruf kode.</li>
+          <li>Buka panel host, tampilkan QR di layar.</li>
+          <li>Peserta masuk lewat nama, lalu jawab.</li>
+          <li>Tiap soal 20 detik; benar &amp; cepat = poin besar.</li>
+          <li>Selesai → Top 8 otomatis masuk arsip.</li>
+        </ol>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="/app.js"></script>
+<script>
+const { $, $$, esc, api, toast, lock, getPin, setPin, clearPin } = SB;
+const KEY = 'qz_saya';
+const bacaSaya = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { return []; } };
+const simpanSaya = (v) => localStorage.setItem(KEY, JSON.stringify(v.slice(0, 12)));
+
+async function cekStatus() {
+  try {
+    const h = await fetch('/health').then((r) => r.json());
+    $('#statusTag').innerHTML = '<span class="dot"></span> tersambung';
+    const c = await api('/api/config');
+    if (!c.pin) { lock(true); return; }
+    lock(true);
+    const r = await api('/api/pin');
+    if (!r.ok) lock();
+  } catch (e) {
+    $('#statusTag').innerHTML = '<span class="dot off"></span> SERVER TIDAK TERSAMBUNG';
+  }
+}
+
+$('#formPin').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const v = $('#lockPin').value.trim();
+  if (!v) return;
+  setPin(v);
+  try {
+    const r = await api('/api/pin');
+    if (!r.ok) throw new Error('PIN salah');
+    $('#lockErr').classList.add('hide');
+    lock(true);
+    toast('Panel dibuka');
+    gambarSaya();
+  } catch (e) {
+    clearPin();
+    $('#lockErr').textContent = e.message;
+    $('#lockErr').classList.remove('hide');
+  }
+});
+
+function gambarSaya() {
+  const arr = bacaSaya();
+  $('#jmlSaya').textContent = arr.length;
+  if (!arr.length) { $('#saya').innerHTML = '<li class="small muted">Belum ada kuis di perangkat ini.</li>'; return; }
+  $('#saya').innerHTML = arr.map((k) => `<li>
+    <div style="flex:1;min-width:0">
+      <div class="mono" style="font-weight:700;letter-spacing:.08em">${esc(k.code)}</div>
+      <div class="tiny muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(k.judul)}</div>
+    </div>
+    <a class="btn btn-ghost" style="padding:6px 10px;font-size:12px" href="/host?code=${encodeURIComponent(k.code)}">Host</a>
+    <a class="btn btn-ghost" style="padding:6px 10px;font-size:12px" href="/tv?code=${encodeURIComponent(k.code)}" target="_blank" rel="noopener">TV</a>
+  </li>`).join('');
+}
+
+function hitungSoal(t) {
+  const blok = String(t || '').split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+  let n = 0;
+  for (const b of blok) {
+    const baris = b.split('\n').filter((x) => x.trim());
+    if (baris.length >= 2 || (baris.length === 1 && baris[0].includes('|'))) n++;
+  }
+  $('#hitung').textContent = n ? `±${n} soal terdeteksi — periksa tanda * pada kunci.` : 'Belum ada soal.';
+}
+$('#teks').addEventListener('input', (e) => hitungSoal(e.target.value));
+
+$('#fBuat').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const btn = $('#btnBuat');
+  $('#errBuat').classList.add('hide');
+  btn.disabled = true; btn.textContent = 'Membuat…';
+  try {
+    const r = await api('/api/quiz', { body: {
+      judul: $('#judul').value.trim(),
+      teks: $('#teks').value,
+      limit: Number($('#limit').value) || 20
+    }});
+    $('#kodeBaru').textContent = r.code;
+    $('#hasilInfo').textContent = `${r.qTotal} soal · kode dibagikan ke peserta`;
+    $('#keHost').href = `/host?code=${encodeURIComponent(r.code)}`;
+    $('#keTv').href = `/tv?code=${encodeURIComponent(r.code)}`;
+    $('#salin').onclick = async () => {
+      try { await navigator.clipboard.writeText(r.joinUrl); toast('Tautan peserta disalin'); }
+      catch (e) { prompt('Salin tautan ini:', r.joinUrl); }
+    };
+    const arr = bacaSaya().filter((k) => k.code !== r.code);
+    arr.unshift({ code: r.code, judul: $('#judul').value.trim() || 'Quiziz', at: Date.now() });
+    simpanSaya(arr); gambarSaya();
+    $('#hasil').classList.remove('hide');
+    $('#hasil').classList.add('pop');
+    toast('Kuis dibuat — ' + r.qTotal + ' soal');
+  } catch (e) {
+    $('#errBuat').textContent = e.message;
+    $('#errBuat').classList.remove('hide');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Buat kuis';
+  }
+});
+
+hitungSoal('');
+gambarSaya();
+cekStatus();
+</script>
+</body>
+</html>

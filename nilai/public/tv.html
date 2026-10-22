@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Layar TV · Penilaian — SBIM Camp</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/sbim.css">
+<style>
+  .tvwrap{padding:24px 30px;gap:12px}
+  .judul{font-family:var(--disp);font-size:clamp(20px,2.4vw,34px);margin:0;letter-spacing:-.01em}
+  .daftar{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;min-height:0}
+  .lrow{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.05);
+    border:2px solid rgba(233,242,250,.16);border-radius:14px;padding:12px 16px;transition:.3s}
+  .lrow .rk{font-family:var(--disp);font-size:clamp(18px,2vw,30px);width:52px;text-align:center;opacity:.85}
+  .lrow .nm{flex:1;min-width:0}
+  .lrow .nm b{display:block;font-family:var(--disp);font-size:clamp(17px,2vw,30px);line-height:1.1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lrow .nm span{font-family:var(--mono);font-size:clamp(10px,1vw,13px);opacity:.6;letter-spacing:.08em}
+  .lrow .pt{font-family:var(--mono);font-weight:700;font-size:clamp(18px,2.2vw,34px);min-width:120px;text-align:right}
+  .lrow .gr{width:min(34vw,420px);height:10px;background:rgba(233,242,250,.12);border-radius:6px;overflow:hidden}
+  .lrow .gr>i{display:block;height:100%;background:var(--accent);border-radius:6px;transition:width .6s}
+  .lrow.satu{background:var(--yellow);color:var(--ink);border-color:var(--yellow);transform:scale(1.015)}
+  .lrow.satu .gr{background:rgba(8,43,69,.18)}
+  .lrow.satu .gr>i{background:var(--ink)}
+  .lrow.sorot{box-shadow:0 0 0 4px var(--accent)}
+  .lrow.sembunyi{opacity:0;transform:translateY(14px)}
+  .ticker{font-family:var(--mono);font-size:clamp(12px,1.2vw,16px);opacity:.9;height:24px}
+  .ticker b{color:var(--yellow)}
+  .tvhead .kecil{font-family:var(--mono);font-size:11px;letter-spacing:.18em;opacity:.55;text-transform:uppercase}
+</style>
+</head>
+<body class="tv">
+<div class="tvwrap">
+  <div class="tvhead">
+    <div class="brand">
+      <img src="/sbim-logo-putih.svg" alt="SBIM">
+      <span><span class="appname">PENILAIAN</span><br><span class="sub">SBIM Camp</span></span>
+    </div>
+    <div class="row tight">
+      <span class="kecil" id="infoPeserta">0 peserta</span>
+      <span class="kecil" id="infoPoin">0 poin</span>
+      <span class="tag" id="tagStatus">menyambung…</span>
+    </div>
+  </div>
+
+  <div class="tvhead" style="margin-top:4px">
+    <h1 class="judul">Peringkat sementara — Top 8</h1>
+    <button class="btn btn-ghost" id="btnReveal" type="button" style="border-color:rgba(233,242,250,.4);color:var(--paper);padding:7px 12px;font-size:12px">Tampilkan 8 → 1</button>
+  </div>
+
+  <div class="daftar" id="daftar">
+    <div class="small muted">Memuat peringkat…</div>
+  </div>
+
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<script src="/app.js"></script>
+<script>
+const { $, esc, rupiah, api } = SB;
+let data = null, terakhirId = null, sock = null, reveal = false;
+
+async function mulai() {
+  try {
+    data = await api('/api/lcd');
+    gambar();
+    sock = SB.ws('ledger', 'tv');
+    sock.on('nilai:update', (d) => { if (!reveal) { data = d; gambar(); } });
+    sock.on('__open', () => { $('#tagStatus').textContent = 'tersambung'; });
+    sock.on('__close', () => { $('#tagStatus').textContent = 'menyambung ulang…'; });
+    setInterval(async () => {
+      if (reveal) return;
+      try { const d = await api('/api/lcd'); data = d; gambar(); } catch (e) {}
+    }, 4000);
+  } catch (e) {
+    $('#daftar').innerHTML = '<div class="small muted">SERVER TIDAK TERSAMBUNG — ' + esc(e.message) + '</div>';
+  }
+}
+
+function gambar() {
+  if (!data) return;
+  $('#infoPeserta').textContent = (data.peserta || 0) + ' peserta';
+  $('#infoPoin').textContent = rupiah(data.totalPoin || 0) + ' poin';
+  const top = data.top || [];
+  const maks = top.length ? Math.max(1, top[0].score) : 1;
+  $('#daftar').innerHTML = top.length ? top.map((r, i) => `<div class="lrow ${i === 0 ? 'satu' : ''}" data-i="${i}">
+    <div class="rk">${r.rank}</div>
+    <div class="nm"><b>${esc(r.name)}</b><span>${esc(r.kelompok || '—')}</span></div>
+    <div class="gr"><i style="width:${Math.max(2, Math.round((r.score / maks) * 100))}%"></i></div>
+    <div class="pt">${esc(rupiah(r.score))}</div>
+  </div>`).join('') : '<div class="small muted">Belum ada poin tercatat.</div>';
+
+  const t = data.terakhir;
+  if (t && t.id !== terakhirId) {
+    terakhirId = t.id;
+    $('#ticker').innerHTML = `<b>${t.poin > 0 ? '+' : ''}${esc(rupiah(t.poin))}</b> · ${esc(t.nama)} — ${esc(t.sesi)} / ${esc(t.kegiatan)}`;
+    $('#ticker').classList.remove('pop'); void $('#ticker').offsetWidth; $('#ticker').classList.add('pop');
+  }
+}
+
+$('#btnReveal').onclick = async () => {
+  if (reveal) return;
+  const baris = [...document.querySelectorAll('#daftar .lrow')];
+  if (baris.length < 2) return;
+  reveal = true;
+  baris.forEach((b) => b.classList.add('sembunyi'));
+  for (let i = baris.length - 1; i >= 0; i--) {
+    await new Promise((r) => setTimeout(r, 850));
+    baris[i].classList.remove('sembunyi');
+    baris[i].classList.add('pop', 'sorot');
+    setTimeout(() => baris[i].classList.remove('sorot'), 900);
+  }
+  reveal = false;
+};
+
+document.addEventListener('keydown', (e) => { if (e.key === 'r' || e.key === 'R') $('#btnReveal').click(); });
+mulai();
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Layar TV · Quiziz — SBIM Camp</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/sbim.css">
+<style>
+  .tvwrap{padding:26px 32px}
+  .soaltv{font-family:var(--disp);font-size:clamp(30px,4.6vw,64px);line-height:1.08;margin:0 0 18px;max-width:20ch}
+  .dua{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .opt-card{position:relative;overflow:hidden;min-height:84px;background:rgba(255,255,255,.05)}
+  .opt-card .isi{flex:1;min-width:0}
+  .opt-card .n{font-family:var(--mono);font-weight:700;font-size:clamp(14px,1.5vw,20px);opacity:.9}
+  .opt-card .fill{position:absolute;left:0;bottom:0;height:6px;background:var(--accent);transition:width .5s}
+  .kode-tv{font-family:var(--disp);font-size:clamp(56px,11vw,140px);letter-spacing:.16em;line-height:1}
+  .qrbox{background:#fff;padding:14px;border-radius:16px;display:inline-block}
+  .qrbox img{display:block;width:min(34vh,320px);height:auto}
+  .hasilrow{display:flex;align-items:center;gap:12px;padding:8px 12px;border-top:1px solid rgba(233,242,250,.14)}
+  .hasilrow:first-child{border-top:none}
+</style>
+</head>
+<body class="tv">
+<div class="tvwrap">
+  <div class="tvhead">
+    <div class="brand">
+      <img src="/sbim-logo-putih.svg" alt="SBIM">
+      <span><span class="appname">QUIZIZ</span><br><span class="sub">SBIM Camp</span></span>
+    </div>
+    <div class="row tight">
+      <span class="tag" id="tagStatus">menyambung…</span>
+      <span class="tag" id="tagKode">······</span>
+    </div>
+  </div>
+
+  <div class="tvmain" id="panggung">
+    <div class="center">
+      <div class="eyebrow">Menyiapkan kuis…</div>
+    </div>
+  </div>
+
+  <div class="tvhead" style="padding-top:6px">
+    <div class="mono small muted" id="kakiKiri"></div>
+    <div class="mono small muted" id="kakiKanan"></div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+<script>
+const { $, esc, rupiah, api } = SB;
+const code = String(new URLSearchParams(location.search).get('code') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+$('#tagKode').textContent = code || '······';
+let st = null, sock = null, qr = null, tik = null, poll = null;
+
+if (!code) {
+  $('#panggung').innerHTML = '<div class="center"><div class="eyebrow">Kode tidak ada</div><h1 class="disp">Buka lewat /tv?code=XXXXXX</h1></div>';
+} else {
+  mulai();
+}
+
+async function mulai() {
+  try {
+    qr = await api('/api/quiz/' + code + '/qr?w=640');
+    sock = SB.ws(code, 'tv');
+    sock.on('quiz:state', (d) => { st = d; render(); });
+    sock.on('__open', () => { $('#tagStatus').textContent = 'tersambung'; });
+    sock.on('__close', () => { $('#tagStatus').textContent = 'menyambung ulang…'; });
+    st = await api('/api/quiz/' + code + '?view=tv');
+    render();
+    poll = setInterval(async () => {
+      if (!st || (st.status !== 'question' && st.status !== 'reveal' && st.status !== 'paused')) return;
+      try {
+        const d = await api('/api/quiz/' + code + '?view=tv');
+        if (d.sudah !== st.sudah) { st.sudah = d.sudah; st.peserta = d.peserta; render(); }
+      } catch (e) {}
+    }, 1000);
+  } catch (e) {
+    $('#panggung').innerHTML = '<div class="center"><div class="eyebrow">SERVER TIDAK TERSAMBUNG</div><h1 class="disp">' + esc(e.message) + '</h1></div>';
+  }
+}
+
+function render() {
+  if (!st) return;
+  $('#kakiKanan').textContent = (st.peserta || 0) + ' peserta';
+  if (st.status === 'idle') {
+    $('#tagStatus').textContent = 'siap';
+    $('#panggung').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr auto;gap:30px;align-items:center">
+        <div>
+          <div class="eyebrow">Bergabung sekarang</div>
+          <h1 class="disp" style="margin:8px 0 10px;font-size:clamp(28px,4vw,54px)">${esc(st.judul || 'Quiziz SBIM')}</h1>
+          <div class="kode-tv">${esc(st.code)}</div>
+          <div class="mono small" style="margin-top:14px;opacity:.75;word-break:break-all">${esc((qr && qr.joinUrl || '').replace(/^https?:\/\//, ''))}</div>
+          <div class="row" style="margin-top:18px"><span class="tag green">${st.qTotal || 0} soal</span>
+          <span class="tag">20 detik / soal</span><span class="tag yellow">benar + cepat = poin</span></div>
+        </div>
+        <div class="qrbox">${qr ? `<img src="${qr.qr}" alt="QR bergabung">` : ''}</div>
+      </div>`;
+    $('#kakiKiri').textContent = 'Pindai QR dengan kamera HP — tanpa aplikasi.';
+    return;
+  }
+
+  if (st.status === 'finished') {
+    $('#tagStatus').textContent = 'selesai';
+    const t = st.podium || [];
+    $('#panggung').innerHTML = `
+      <div class="center">
+        <div class="eyebrow">Hasil akhir</div>
+        <h1 class="disp" style="margin:6px 0 18px;font-size:clamp(28px,4vw,48px)">Top 8 — ${esc(st.judul)}</h1>
+        <div class="podium">${[t[1], t[0], t[2]].filter(Boolean).map((r) => `
+          <div class="pod p${r.rank}"><div class="place">#${r.rank}</div>
+          <div class="who">${esc(r.name)}</div><div class="pts">${esc(rupiah(r.score))}</div></div>`).join('')}</div>
+        <div class="card" style="margin-top:16px;max-width:760px;margin-left:auto;margin-right:auto;text-align:left">
+          ${(st.top || []).slice(3, 8).map((r) => `<div class="hasilrow">
+            <span class="mono" style="width:34px">#${r.rank}</span>
+            <b style="flex:1">${esc(r.name)}</b>
+            <span class="mono">${esc(rupiah(r.score))}</span></div>`).join('') || '<div class="small muted">Belum ada peserta.</div>'}
+        </div>
+      </div>`;
+    $('#kakiKiri').textContent = 'Papan skor lengkap ada di arsip.';
+    return;
+  }
+
+  const q = st.question || { text: '', options: [] };
+  const hit = st.hitung || {};
+  const total = Object.values(hit).reduce((a, b) => a + b, 0) || 0;
+  const kunci = st.status === 'reveal' ? st.kunci : null;
+  $('#panggung').innerHTML = `
+    <div class="row tight" style="margin-bottom:8px">
+      <span class="tag yellow">SOAL ${(st.qIndex || 0) + 1} / ${st.qTotal || 0}</span>
+      <span class="tag ${st.status === 'reveal' ? 'green' : ''}">${st.status === 'reveal' ? 'kunci jawaban' : st.status === 'paused' ? 'dijeda' : 'menjawab'}</span>
+      <div class="spacer"></div>
+      <div class="clock ${st.status !== 'reveal' && st.deadline && (st.deadline - Date.now()) < 5000 ? 'warn' : ''}" id="jam">—</div>
+    </div>
+    <h1 class="soaltv">${esc(q.text)}</h1>
+    <div class="dua">
+      ${(q.options || []).map((o) => {
+        const n = hit[o.id] || 0;
+        const pct = total ? Math.round((n / total) * 100) : 0;
+        const kelas = st.status === 'reveal' ? (o.correct ? 'correct' : 'dim') : '';
+        return `<div class="opt-card ${kelas}">
+          <div class="lett">${esc(o.id)}</div>
+          <div class="isi">${esc(o.text)}</div>
+          ${st.status === 'reveal' ? `<div class="n">${n}</div>` : ''}
+          ${st.status === 'reveal' ? `<div class="fill" style="width:${pct}%"></div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  $('#kakiKiri').textContent = st.status === 'reveal' ? 'Jawaban benar ditandai hijau.' : 'Pilih satu jawaban di HP — tidak bisa diubah.';
+  $('#kakiKanan').textContent = `${st.sudah || 0} / ${st.peserta || 0} menjawab`;
+  detak();
+}
+
+function detak() {
+  clearInterval(tik);
+  if (!st || !st.deadline) { const el = $('#jam'); if (el) el.textContent = '—'; return; }
+  const kabar = () => {
+    const el = $('#jam'); if (!el) return;
+    const sisa = Math.max(0, st.deadline - Date.now());
+    el.textContent = st.status === 'paused' ? '‖' : Math.ceil(sisa / 1000);
+    el.classList.toggle('warn', sisa <= 5000 && st.status !== 'reveal');
+    if (sisa <= 0) clearInterval(tik);
+  };
+  kabar(); tik = setInterval(kabar, 300);
+}
+</script>
+</body>
+</html>
