@@ -46,7 +46,7 @@ export class Quiz {
       code: m.code, judul: m.judul || "Quiziz", status: m.status || "idle",
       qIndex: Number(m.qIndex) || 0, openedAt: Number(m.openedAt) || 0,
       deadline: Number(m.deadline) || 0, dibuat: Number(m.dibuat) || Date.now(),
-      sisaJeda: Number(m.sisaJeda) || 0, questions: soal
+      sisaJeda: Number(m.sisaJeda) || 0, run: Number(m.run) || 0, questions: soal
     };
     for (const r of this.sql().exec("SELECT pid,nama FROM orang").toArray()) this.orang.set(r.pid, r.nama);
     for (const r of this.sql().exec("SELECT pid,SUM(poin) s FROM jawab GROUP BY pid").toArray()) this.skor.set(r.pid, Number(r.s) || 0);
@@ -61,7 +61,7 @@ export class Quiz {
     const put = (k, v) => this.sql().exec("INSERT INTO meta(k,v) VALUES(?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v", k, String(v));
     put("code", m.code); put("judul", m.judul); put("status", m.status);
     put("qIndex", m.qIndex); put("openedAt", m.openedAt); put("deadline", m.deadline);
-    put("dibuat", m.dibuat); put("sisaJeda", m.sisaJeda || 0);
+    put("dibuat", m.dibuat); put("sisaJeda", m.sisaJeda || 0); put("run", m.run || 0);
   }
   simpanJawab() {
     this.skema();
@@ -90,7 +90,7 @@ export class Quiz {
   }
   statePlayer() {
     const m = this.q, hitung = this.jawabPerOpsi();
-    const dasar = { code: m.code, judul: m.judul, status: m.status, qIndex: m.qIndex,
+    const dasar = { code: m.code, judul: m.judul, status: m.status, qIndex: m.qIndex, run: m.run || 0,
       qTotal: m.questions.length, serverNow: Date.now(), peserta: this.orang.size, sudah: this.cur.size };
     if (m.status === "question") {
       const q = m.questions[m.qIndex] || { text: "", options: [], limit: 20 };
@@ -304,7 +304,7 @@ export class Quiz {
       const ins = "INSERT INTO soal(idx,teks,opsi,limit_s,buka) VALUES(?,?,?,?,0)";
       soal.forEach((q, i) => s.exec(ins, i, q.text, JSON.stringify(q.options), q.limit || 20));
       this.q = { code: String(body.code || "").toUpperCase(), judul: Q.potong(body.judul, 60) || "Quiziz SBIM",
-        status: "idle", qIndex: 0, openedAt: 0, deadline: 0, dibuat: Date.now(), sisaJeda: 0, questions: soal };
+        status: "idle", qIndex: 0, openedAt: 0, deadline: 0, dibuat: Date.now(), sisaJeda: 0, run: 0, questions: soal };
       this.cur.clear(); this.orang.clear(); this.skor.clear();
       this.simpanMeta();
       return j({ code: this.q.code, qTotal: soal.length });
@@ -322,6 +322,7 @@ export class Quiz {
     if (p === "/start") {
       if (this.q.status === "finished" || this.q.status === "idle") {
         if (this.q.status === "finished") { this.sql().exec("DELETE FROM jawab"); this.skor.clear(); }
+        this.q.run = (this.q.run || 0) + 1;
         this.q.qIndex = 0; this.cur.clear();
         this.q.status = "question";
         this.q.openedAt = Date.now();

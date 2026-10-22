@@ -27,7 +27,7 @@
   .opt.salah{background:var(--red);border-color:var(--red);color:#fff}
   .opt.salah .lett{background:#fff;color:var(--red);border-color:#fff}
   .opt.mati{opacity:.4}
-  .opt:disabled{cursor:default}
+  .opt:disabled,.opt[aria-disabled="true"]{cursor:not-allowed}
   .soal{font-family:var(--disp);font-size:clamp(20px,5.4vw,30px);line-height:1.15;margin:6px 0 4px}
   .jam{font-family:var(--disp);font-size:30px;line-height:1}
   .progress{height:10px;background:rgba(8,43,69,.12);border-radius:6px;overflow:hidden;margin-top:10px}
@@ -110,7 +110,9 @@ const code = String(new URLSearchParams(location.search).get('code') || '').toUp
 $('#chipKode').textContent = code || '······';
 
 let st = null, sock = null, nama = '', pid = '', total = 0, terkirim = false, dipilih = null, hasil = null, tik = null;
-const K_NAMA = 'qz_nama_' + code, K_PID = 'qz_pid', K_ANS = 'qz_ans_' + code;
+const K_NAMA = 'qz_nama_' + code, K_PID = 'qz_pid';
+let K_ANS = 'qz_ans_' + code + '_0';
+const pakaiRun = (r) => { K_ANS = 'qz_ans_' + code + '_' + (Number.isFinite(r) ? r : 0); };
 const jawabLokal = () => { try { return JSON.parse(localStorage.getItem(K_ANS) || '{}'); } catch (e) { return {}; } };
 const simpanJawab = (i, data) => { const j = jawabLokal(); j[i] = data; localStorage.setItem(K_ANS, JSON.stringify(j)); };
 
@@ -150,13 +152,13 @@ function sambung() {
   sock.on('__open', () => { sock.send('quiz:join', { nama, pid }); $('#tungguInfo').textContent = 'Tunggu panitia memulai kuis…'; });
   sock.on('__close', () => { $('#tungguInfo').textContent = 'Menyambung ulang…'; });
   sock.on('quiz:hai', (d) => {
-    st = d;
+    st = d; pakaiRun(d.run);
     if (d.aku) { total = d.aku.total || 0; }
     poinChip(); render();
   });
-  sock.on('quiz:state', (d) => { st = d; render(); });
+  sock.on('quiz:state', (d) => { st = d; pakaiRun(d.run); render(); });
   sock.on('quiz:ack', (d) => {
-    terkirim = true; total = d.total || total; poinChip();
+    clearTimeout(window.__tungguAck); terkirim = true; total = d.total || total; poinChip();
     simpanJawab(st.qIndex, { opt: dipilih, poin: d.poin || 0, benar: !!d.benar });
     render();
     if (d.poin > 0) toast('+' + rupiah(d.poin) + ' poin', false);
@@ -212,7 +214,8 @@ function render() {
       k += o.id === dipilih ? ' pilih' : ' mati';
     }
     const n = st.status === 'reveal' && o.count != null ? `<span class="n">${o.count} pilih</span>` : '';
-    return `<button class="${k}" data-opt="${esc(o.id)}" ${(terkirim || st.status !== 'question') ? 'disabled' : ''}>
+    const nonaktif = terkirim || st.status !== 'question';
+    return `<button type="button" class="${k}" data-opt="${esc(o.id)}" aria-disabled="${nonaktif}">
       <span class="lett">${esc(o.id)}</span><span class="txt">${esc(o.text)}</span>${n}</button>`;
   }).join('');
 
@@ -236,10 +239,23 @@ function render() {
 }
 
 function kirim(opt) {
-  if (terkirim || !st || st.status !== 'question') return;
+  if (!st) return;
+  if (st.status !== 'question') {
+    toast(st.status === 'paused' ? 'Kuis sedang dijeda.' : 'Soal ini sudah ditutup.', true);
+    return;
+  }
+  if (terkirim) { toast('Jawabanmu sudah terkirim untuk soal ini.', true); return; }
   dipilih = opt; terkirim = true;
   render();
+  const qKe = st.qIndex;
   sock.send('quiz:answer', { optionId: opt });
+  clearTimeout(window.__tungguAck);
+  window.__tungguAck = setTimeout(() => {
+    if (terkirim && st && st.qIndex === qKe && !sock.open) {
+      terkirim = false; render();
+      toast('Koneksi lambat — tekan jawabanmu lagi.', true);
+    }
+  }, 5000);
 }
 
 let tikJam = null, tikBar = null;
