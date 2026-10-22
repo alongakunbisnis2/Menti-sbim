@@ -19,3 +19,6 @@ class_name = "Arsip"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Quiz", "Arsip"]
+
+[ai]
+binding = "AI"

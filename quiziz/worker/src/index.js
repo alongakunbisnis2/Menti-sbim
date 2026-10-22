@@ -3,6 +3,7 @@
 import QRCode from "qrcode";
 import * as Q from "../../../lib/quiziz.js";
 import { cekPin, pinAktif } from "../../../lib/auth.js";
+import { buatSoal } from "./buat.js";
 
 export { Quiz } from "./quiz.js";
 export { Arsip } from "./arsip.js";
@@ -39,6 +40,7 @@ async function api(req, env, url) {
   if (p === "/health") return j({ ok: true, app: "quiziz-sbim", pin: pinAktif(env), ts: Date.now() });
   if (p === "/api/config") return j({ pin: pinAktif(env), jedaKunci: Q.JEDA_KUNCI, poin: [Q.POIN_MAKS, Q.POIN_MIN] });
   if (p === "/api/pin") return j({ ok: cekPin(req, env), wajib: pinAktif(env) });
+  if (p === "/api/buat-soal" && m === "POST") return buatSoal(req, env, cekPin);
 
   // ---------- buat kuis ----------
   if (p === "/api/quiz" && m === "POST") {

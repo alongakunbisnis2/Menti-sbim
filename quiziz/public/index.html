@@ -60,6 +60,28 @@
             <div class="hint" id="hitung">Belum ada soal.</div>
           </div>
         </div>
+        <div style="border:2px dashed var(--ink);border-radius:14px;padding:12px;background:rgba(255,212,0,.14)">
+          <div class="spread" style="margin-bottom:6px">
+            <div><b>Buat soal otomatis</b> <span class="tag" style="padding:2px 8px;font-size:10px">AI</span></div>
+            <span class="tiny muted">opsional · hasil bisa diedit</span>
+          </div>
+          <textarea class="field" id="materiAI" rows="4" placeholder="Tempel materi di sini, atau tulis topiknya saja…"></textarea>
+          <div class="row" style="margin-top:8px;align-items:flex-end">
+            <label class="small" style="flex:1;min-width:140px">Sumber
+              <select class="field" id="modeAI">
+                <option value="materi">Materi yang saya tempel</option>
+                <option value="topik">Topik saja</option>
+              </select>
+            </label>
+            <label class="small" style="width:96px">Jumlah
+              <select class="field" id="jumlahAI">
+                <option>3</option><option selected>5</option><option>8</option><option>10</option>
+              </select>
+            </label>
+            <button class="btn btn-ink" id="btnAI" type="button" style="flex:0 0 auto">Buat soal</button>
+          </div>
+          <div class="hint" id="statusAI" style="margin-top:6px">AI menyusun soal dari materi, lalu mengisinya ke kotak di bawah.</div>
+        </div>
         <label class="small" for="teks"><b>Soal</b>
           <textarea class="field mono" id="teks" rows="12" spellcheck="false" placeholder="Soal pertama
 Pilihan A
@@ -172,6 +194,30 @@ function hitungSoal(t) {
   $('#hitung').textContent = n ? `±${n} soal terdeteksi — periksa tanda * pada kunci.` : 'Belum ada soal.';
 }
 $('#teks').addEventListener('input', (e) => hitungSoal(e.target.value));
+
+$('#btnAI').addEventListener('click', async () => {
+  const materi = $('#materiAI').value.trim();
+  if (materi.length < 25) { toast('Tulis materi/topik dulu (minimal 25 karakter)', true); $('#materiAI').focus(); return; }
+  if ($('#teks').value.trim() && !confirm('Ganti soal yang sudah ada dengan hasil AI?')) return;
+  const btn = $('#btnAI');
+  btn.disabled = true; btn.textContent = 'Menyusun…';
+  $('#statusAI').textContent = 'AI sedang menyusun soal… biasanya 20–60 detik.';
+  try {
+    const r = await api('/api/buat-soal', { body: {
+      materi, mode: $('#modeAI').value, jumlah: Number($('#jumlahAI').value)
+    }});
+    $('#teks').value = r.teks;
+    hitungSoal(r.teks);
+    $('#statusAI').innerHTML = `✓ ${r.jumlah} soal siap — periksa tanda * pada kunci, lalu tekan Buat kuis.`;
+    toast(`${r.jumlah} soal dibuat`);
+    $('#teks').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (e) {
+    $('#statusAI').textContent = e.message;
+    toast(e.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Buat soal';
+  }
+});
 
 $('#fBuat').addEventListener('submit', async (ev) => {
   ev.preventDefault();
