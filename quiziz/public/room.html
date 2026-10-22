@@ -13,7 +13,8 @@
   body{min-height:100dvh}
   .layar{min-height:100dvh;display:flex;flex-direction:column}
   .isi{flex:1;display:flex;flex-direction:column;justify-content:center;padding:10px 0 26px}
-  .opt{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:#fff;border:2px solid var(--ink);
+  #opsi{position:relative;z-index:3}
+  .opt{position:relative;z-index:3;display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:#fff;border:2px solid var(--ink);
     border-radius:14px;padding:14px;margin-top:10px;font:inherit;color:inherit;cursor:pointer;
     box-shadow:4px 4px 0 rgba(8,43,69,.12);transition:transform .12s,box-shadow .12s,background .2s}
   .opt:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(8,43,69,.12)}
@@ -106,11 +107,41 @@
 
 <script src="/app.js"></script>
 <script>
+// ---- panel diagnosa: buka dengan ?cek=1 ----
+if (new URLSearchParams(location.search).get('cek') === '1') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const k = document.createElement('div');
+    k.style.cssText = 'position:fixed;left:3vw;right:3vw;bottom:8px;z-index:999;background:#fff;border:2px solid #082B45;border-radius:10px;padding:8px 10px;font:11px/1.45 ui-monospace,monospace;white-space:pre-wrap;max-height:38vh;overflow:auto';
+    k.id = 'cek'; k.textContent = 'menunggu…'; document.body.appendChild(k);
+    const garis = [];
+    const tulis = (t) => { garis.push(t); if (garis.length > 8) garis.shift(); k.textContent = garis.join('\n'); };
+    window.addEventListener('error', (e) => tulis('ERROR: ' + e.message));
+    window.addEventListener('unhandledrejection', (e) => tulis('REJECT: ' + (e.reason && e.reason.message || e.reason)));
+    document.addEventListener('pointerdown', (e) => {
+      const el = e.target && e.target.closest ? e.target.closest('.opt, button, a') : null;
+      const atas = document.elementFromPoint(e.clientX, e.clientY);
+      tulis('tap ' + e.clientX + ',' + e.clientY +
+        ' | target=' + (el ? el.tagName + '.' + String(el.className).slice(0, 24) : (e.target && e.target.tagName)) +
+        ' | diAtas=' + (atas ? atas.tagName + '.' + String(atas.className).slice(0, 24) : 'null') +
+        ' | status=' + (window.__st ? window.__st.status : '?') + ' terkirim=' + (window.__terkirim) +
+        ' ws=' + (window.__wsAda ? window.__wsAda() : '?'));
+    }, true);
+    setInterval(() => { if (window.__cekDump) k.textContent = window.__cekDump(); }, 700);
+  });
+}
+</script>
+<script>
 const { $, esc, toast, rupiah } = SB;
 const code = String(new URLSearchParams(location.search).get('code') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 $('#chipKode').textContent = code || '······';
 
 let st = null, sock = null, nama = '', pid = '', total = 0, terkirim = false, dipilih = null, hasil = null, tik = null;
+window.__wsAda = () => (sock && sock.open ? 'open' : 'putus');
+window.__cekDump = () => 'status=' + (st ? st.status : '?') + ' q=' + (st ? st.qIndex : '?') + ' run=' + (st ? st.run : '?') +
+  '\nterkirim=' + terkirim + ' sock=' + window.__wsAda() + ' panel=' +
+  ['Masuk','Tunggu','Soal','Akhir'].filter((n) => !$('#panel' + n).classList.contains('hide')).join(',') +
+  '\ntombol=' + document.querySelectorAll('#opsi .opt').length + ' aria=' +
+  [...document.querySelectorAll('#opsi .opt')].map((b) => b.getAttribute('aria-disabled')).join(',');
 const K_NAMA = 'qz_nama_' + code, K_PID = 'qz_pid';
 let K_ANS = 'qz_ans_' + code + '_0';
 const pakaiRun = (r) => { K_ANS = 'qz_ans_' + code + '_' + (Number.isFinite(r) ? r : 0); };
@@ -151,6 +182,7 @@ function sambung() {
   if (sock) sock.close();
   sock = SB.ws(code, 'player', { pid, name: nama });
   sock.on('__open', () => {
+    stopPolling();
     $('#chipSambung').classList.add('hide');
     sock.send('quiz:join', { nama, pid });
     $('#tungguInfo').textContent = 'Tunggu panitia memulai kuis…';
@@ -158,6 +190,7 @@ function sambung() {
   sock.on('__close', () => {
     $('#chipSambung').classList.remove('hide');
     $('#tungguInfo').textContent = 'Menyambung ulang…';
+    setTimeout(() => { if (!sock.open) mulaiPolling(); }, 1200);
   });
   sock.on('quiz:hai', (d) => {
     st = d; pakaiRun(d.run);
@@ -181,6 +214,7 @@ function sambung() {
 }
 
 function render() {
+  window.__st = st; window.__terkirim = terkirim;
   if (!st) { tampil('panelTunggu'); return; }
   $('#tagOrang').textContent = (st.peserta || 0) + ' peserta';
   if (st.status === 'idle') {
@@ -253,8 +287,21 @@ function kirim(opt) {
     toast(st.status === 'paused' ? 'Kuis sedang dijeda.' : 'Soal ini sudah ditutup.', true);
     return;
   }
-  if (!sock.open) { toast('Belum tersambung — tunggu sebentar lalu tekan lagi.', true); return; }
   if (terkirim) { toast('Jawabanmu sudah terkirim untuk soal ini.', true); return; }
+  if (!sock.open) {
+    // mode lambat: kirim lewat HTTP
+    dipilih = opt; terkirim = true; render();
+    api('/api/quiz/' + code + '/jawab', { body: { pid, optionId: opt } }).then((r) => {
+      total = r.total || total; poinChip();
+      simpanJawab(st.qIndex, { opt, poin: r.poin || 0, benar: !!r.benar });
+      terkirim = true; render();
+      if (r.poin > 0) toast('+' + rupiah(r.poin) + ' poin', false);
+    }).catch((e) => {
+      terkirim = false; render();
+      toast(e.message, true);
+    });
+    return;
+  }
   dipilih = opt; terkirim = true;
   render();
   const qKe = st.qIndex;
@@ -282,6 +329,28 @@ function detak() {
     if (sisa <= 0) clearInterval(tikBar);
   };
   kabar(); tikBar = setInterval(kabar, 250);
+}
+
+let poll = null;
+function mulaiPolling() {
+  if (poll || !code || !nama) return;
+  const chip = $('#chipSambung');
+  chip.classList.remove('hide'); chip.textContent = 'mode lambat…';
+  const tarik = async () => {
+    try {
+      const d = await api('/api/quiz/' + code + '/gabung', { body: { pid, nama } });
+      st = d; pakaiRun(d.run);
+      if (d.status === 'question' && d.aku && d.aku.sudah) terkirim = true;
+      render(); chip.classList.add('hide');
+    } catch (e) {
+      chip.classList.remove('hide'); chip.textContent = 'terputus…';
+    }
+  };
+  tarik(); poll = setInterval(tarik, 2500);
+}
+function stopPolling() {
+  if (poll) { clearInterval(poll); poll = null; }
+  const c = $('#chipSambung'); c.textContent = 'terputus…';
 }
 
 function kirimUlang() { if (sock && sock.open) sock.send('quiz:join', { nama, pid }); }

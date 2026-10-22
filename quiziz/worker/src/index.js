@@ -88,6 +88,12 @@ async function api(req, env, url) {
       return new Response(r.body, { status: r.status, headers: { ...CORS, "content-type": "text/csv; charset=utf-8", "content-disposition": r.headers.get("content-disposition") || 'attachment; filename="quiziz.csv"' } });
     }
 
+    if ((aksi === "gabung" || aksi === "jawab") && m === "POST") {
+      const body = await req.json().catch(() => ({}));
+      const r = await stub.fetch("https://do/" + aksi, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      return new Response(r.body, { status: r.status, headers: { ...CORS, "content-type": "application/json; charset=utf-8" } });
+    }
+
     if (["start", "skip", "pause", "resume", "stop", "reset", "add"].includes(aksi) && m === "POST") {
       if (!cekPin(req, env)) return j({ error: "PIN salah" }, 401);
       const body = await req.json().catch(() => ({}));

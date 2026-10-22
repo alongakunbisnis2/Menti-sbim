@@ -227,6 +227,28 @@ export class Quiz {
   }
 
   // ---------- WebSocket ----------
+  // dipakai WS maupun HTTP (mode lambat bila websocket terhalang)
+  async gabung(pid, nama) {
+    this.orang.set(pid, nama);
+    this.sql().exec("INSERT INTO orang(pid,nama,gabung) VALUES(?,?,?) ON CONFLICT(pid) DO UPDATE SET nama=excluded.nama",
+      pid, nama, Date.now());
+    return { ...this.statePlayer(), aku: { nama, total: this.skor.get(pid) || 0, sudah: this.cur.has(pid) } };
+  }
+  async jawab(pid, optionId) {
+    if (!this.q || this.q.status !== "question") return { error: "Soal sudah ditutup." };
+    if (this.cur.has(pid)) return { error: "Jawabanmu sudah terkirim — tidak bisa diubah." };
+    if (Date.now() > this.q.deadline + 400) return { error: "Waktu habis." };
+    const q = this.q.questions[this.q.qIndex];
+    const opt = (q.options || []).find((o) => o.id === optionId);
+    if (!opt) return { error: "Pilihan tidak dikenal." };
+    const at = Date.now();
+    const poin = Q.poin(!!opt.correct, at - this.q.openedAt, (q.limit || 20) * 1000);
+    this.cur.set(pid, { opt: opt.id, at, benar: !!opt.correct, poin });
+    this.skor.set(pid, (this.skor.get(pid) || 0) + poin);
+    this.kotor = true; this.mungkinSimpan();
+    return { ok: true, total: this.skor.get(pid) || 0, poin, benar: !!opt.correct, waktu: at - this.q.openedAt };
+  }
+
   async webSocketMessage(ws, pesan) {
     let m; try { m = JSON.parse(typeof pesan === "string" ? pesan : new TextDecoder().decode(pesan)); } catch (e) { return; }
     await this.boot();
@@ -237,11 +259,8 @@ export class Quiz {
       const nama = Q.potong(d.nama, 24);
       const pid = String(d.pid || "").trim();
       if (!nama || !pid) return this.kirim(ws, "quiz:error", "Nama dan ID peserta wajib ada.");
-      this.orang.set(pid, nama);
-      this.sql().exec("INSERT INTO orang(pid,nama,gabung) VALUES(?,?,?) ON CONFLICT(pid) DO UPDATE SET nama=excluded.nama",
-        pid, nama, Date.now());
       try { ws.serializeAttachment({ ...att0, pid, nama, role: "player" }); } catch (err) {}
-      this.kirim(ws, "quiz:hai", { ...this.statePlayer(), aku: { nama, total: this.skor.get(pid) || 0, sudah: this.cur.has(pid) } });
+      this.kirim(ws, "quiz:hai", await this.gabung(pid, nama));
       return;
     }
 
@@ -249,18 +268,8 @@ export class Quiz {
     if (!pid) return this.kirim(ws, "quiz:error", "Sesi peserta belum siap — muat ulang halaman.");
 
     if (e === "quiz:answer") {
-      if (!this.q || this.q.status !== "question") return this.kirim(ws, "quiz:error", "Soal sudah ditutup.");
-      if (this.cur.has(pid)) return this.kirim(ws, "quiz:error", "Jawabanmu sudah terkirim — tidak bisa diubah.");
-      if (Date.now() > this.q.deadline + 400) return this.kirim(ws, "quiz:error", "Waktu habis.");
-      const q = this.q.questions[this.q.qIndex];
-      const opt = (q.options || []).find((o) => o.id === d.optionId);
-      if (!opt) return this.kirim(ws, "quiz:error", "Pilihan tidak dikenal.");
-      const at = Date.now();
-      const poin = Q.poin(!!opt.correct, at - this.q.openedAt, (q.limit || 20) * 1000);
-      this.cur.set(pid, { opt: opt.id, at, benar: !!opt.correct, poin });
-      this.skor.set(pid, (this.skor.get(pid) || 0) + poin);
-      this.kotor = true; this.mungkinSimpan();
-      this.kirim(ws, "quiz:ack", { ok: true, total: this.skor.get(pid) || 0, poin, benar: !!opt.correct, waktu: at - this.q.openedAt });
+      const r = await this.jawab(pid, d.optionId);
+      this.kirim(ws, r.error ? "quiz:error" : "quiz:ack", r.error || r);
       return;
     }
 
@@ -294,7 +303,7 @@ export class Quiz {
       return new Response(null, { status: 101, webSocket: client });
     }
 
-    const terbuka = p === "/state" && (u.searchParams.get("view") || "") !== "host";
+    const terbuka = (p === "/state" && (u.searchParams.get("view") || "") !== "host") || p === "/gabung" || p === "/jawab";
     if (!terbuka && !cekPin(req, this.env)) return j({ error: "PIN salah" }, 401);
 
     if (p === "/create") {
@@ -385,6 +394,19 @@ export class Quiz {
       });
       this.simpanMeta(); this.emit();
       return j({ ok: true, qTotal: this.q.questions.length, tambah: hasil.questions.length });
+    }
+
+    if (p === "/gabung" && m === "POST") {
+      const pid = String(body.pid || "").trim(), nama = Q.potong(body.nama, 24);
+      if (!pid || !nama) return j({ error: "Nama dan ID peserta wajib ada." }, 400);
+      return j(await this.gabung(pid, nama));
+    }
+
+    if (p === "/jawab" && m === "POST") {
+      const pid = String(body.pid || "").trim();
+      if (!pid) return j({ error: "ID peserta kosong." }, 400);
+      const r = await this.jawab(pid, body.optionId);
+      return j(r, r.error ? 409 : 200);
     }
 
     if (p === "/csv") {
