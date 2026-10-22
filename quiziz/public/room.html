@@ -13,7 +13,7 @@
   body{min-height:100dvh}
   .layar{min-height:100dvh;display:flex;flex-direction:column}
   .isi{flex:1;display:flex;flex-direction:column;justify-content:center;padding:10px 0 26px}
-  #opsi{position:relative;z-index:3}
+  #opsi{position:relative;z-index:3;touch-action:manipulation}
   .opt{position:relative;z-index:3;display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:#fff;border:2px solid var(--ink);
     border-radius:14px;padding:14px;margin-top:10px;font:inherit;color:inherit;cursor:pointer;
     box-shadow:4px 4px 0 rgba(8,43,69,.12);transition:transform .12s,box-shadow .12s,background .2s}
@@ -88,6 +88,13 @@
       <div class="progress"><i id="bar" style="width:100%"></i></div>
       <h2 class="soal" id="tanya">—</h2>
       <div id="opsi"></div>
+      <div id="manual" class="hide" style="margin-top:12px">
+        <div class="small muted">Pilihan tidak merespons? Ketik hurufnya di sini:</div>
+        <div class="row" style="margin-top:6px">
+          <input class="field mono" id="ketikJawab" maxlength="1" inputmode="text" autocomplete="off" placeholder="A" style="width:72px;text-align:center;text-transform:uppercase;font-size:20px">
+          <button class="btn btn-ink" id="kirimKetik" type="button">Kirim jawaban</button>
+        </div>
+      </div>
       <div class="small muted" id="kabar" style="margin-top:12px;min-height:20px"></div>
     </section>
 
@@ -111,7 +118,7 @@
 if (new URLSearchParams(location.search).get('cek') === '1') {
   document.addEventListener('DOMContentLoaded', () => {
     const k = document.createElement('div');
-    k.style.cssText = 'position:fixed;left:3vw;right:3vw;bottom:8px;z-index:999;background:#fff;border:2px solid #082B45;border-radius:10px;padding:8px 10px;font:11px/1.45 ui-monospace,monospace;white-space:pre-wrap;max-height:38vh;overflow:auto';
+    k.style.cssText = 'position:fixed;left:3vw;right:3vw;bottom:8px;z-index:999;pointer-events:none;background:#fff;border:2px solid #082B45;border-radius:10px;padding:8px 10px;font:11px/1.45 ui-monospace,monospace;white-space:pre-wrap;max-height:30vh;overflow:auto';
     k.id = 'cek'; k.textContent = 'menunggu…'; document.body.appendChild(k);
     const garis = [];
     const tulis = (t) => { garis.push(t); if (garis.length > 8) garis.shift(); k.textContent = garis.join('\n'); };
@@ -136,8 +143,9 @@ const code = String(new URLSearchParams(location.search).get('code') || '').toUp
 $('#chipKode').textContent = code || '······';
 
 let st = null, sock = null, nama = '', pid = '', total = 0, terkirim = false, dipilih = null, hasil = null, tik = null;
+window.__versi = '5';
 window.__wsAda = () => (sock && sock.open ? 'open' : 'putus');
-window.__cekDump = () => 'status=' + (st ? st.status : '?') + ' q=' + (st ? st.qIndex : '?') + ' run=' + (st ? st.run : '?') +
+window.__cekDump = () => 'versi=' + window.__versi + ' status=' + (st ? st.status : '?') + ' q=' + (st ? st.qIndex : '?') + ' run=' + (st ? st.run : '?') +
   '\nterkirim=' + terkirim + ' sock=' + window.__wsAda() + ' panel=' +
   ['Masuk','Tunggu','Soal','Akhir'].filter((n) => !$('#panel' + n).classList.contains('hide')).join(',') +
   '\ntombol=' + document.querySelectorAll('#opsi .opt').length + ' aria=' +
@@ -236,9 +244,9 @@ function render() {
   tampil('panelSoal');
   const q = st.question || { text: '', options: [] };
   const simpan = jawabLokal()[st.qIndex];
+  if (window.__run !== st.run || st.qIndex !== window.__qIndex) { terkirim = false; dipilih = null; }
+  window.__run = st.run; window.__qIndex = st.qIndex;
   if (simpan) { terkirim = true; dipilih = simpan.opt; }
-  else if (st.qIndex !== window.__qIndex) { terkirim = false; dipilih = null; }
-  window.__qIndex = st.qIndex;
 
   $('#nomor').textContent = `SOAL ${(st.qIndex || 0) + 1} / ${st.qTotal || 0}`;
   $('#tanya').textContent = q.text;
@@ -247,6 +255,10 @@ function render() {
   $('#tagFase').className = 'tag ' + (st.status === 'reveal' ? 'green' : st.status === 'paused' ? 'red' : terkirim ? 'ink' : 'yellow');
   $('#jam').textContent = st.status === 'paused' ? '‖' : (st.deadline ? Math.max(0, Math.ceil((st.deadline - Date.now()) / 1000)) : '—');
 
+  const sig = [st.status, st.qIndex, st.run, terkirim, dipilih, q.text,
+    (q.options || []).map((o) => o.id + ':' + o.text).join('~'), st.kunci].join('|');
+  if (sig !== window.__sigOpsi) {
+  window.__sigOpsi = sig;
   $('#opsi').innerHTML = (q.options || []).map((o) => {
     let k = 'opt';
     if (st.status === 'reveal') {
@@ -262,6 +274,7 @@ function render() {
       <span class="lett">${esc(o.id)}</span><span class="txt">${esc(o.text)}</span>${n}</button>`;
   }).join('');
 
+  }
   document.querySelectorAll('#opsi .opt[data-opt]').forEach((b) => {
     b.onclick = () => kirim(b.dataset.opt);
   });
@@ -271,11 +284,15 @@ function render() {
     $('#kabar').innerHTML = simpan2
       ? (simpan2.benar ? `Benar! <b>+${esc(rupiah(simpan2.poin))} poin</b>` : (simpan2.opt ? 'Belum tepat — 0 poin.' : 'Kamu tidak menjawab.'))
       : 'Waktu habis / tidak menjawab — 0 poin.';
+    $('#manual').classList.add('hide');
   } else if (terkirim) {
+    $('#manual').classList.add('hide');
     $('#kabar').textContent = 'JAWABAN TERKIRIM ✓ — tidak bisa diubah.';
   } else if (st.status === 'paused') {
+    $('#manual').classList.add('hide');
     $('#kabar').textContent = 'Kuis dijeda sejenak.';
   } else {
+    $('#manual').classList.toggle('hide', false);
     $('#kabar').textContent = 'Pilih satu jawaban. Benar + cepat = poin lebih besar.';
   }
   detak();
@@ -283,6 +300,8 @@ function render() {
 
 function kirim(opt) {
   if (!st) return;
+  if (Date.now() - (window.__tapKirim || 0) < 400) return;   // cegah dobel (pointerup + click)
+  window.__tapKirim = Date.now();
   if (st.status !== 'question') {
     toast(st.status === 'paused' ? 'Kuis sedang dijeda.' : 'Soal ini sudah ditutup.', true);
     return;
@@ -304,6 +323,7 @@ function kirim(opt) {
   }
   dipilih = opt; terkirim = true;
   render();
+  const kb = $('#kabar'); if (kb) kb.textContent = 'Mengirim jawaban ' + opt + '…';
   const qKe = st.qIndex;
   sock.send('quiz:answer', { optionId: opt });
   clearTimeout(window.__tungguAck);
@@ -343,7 +363,10 @@ function mulaiPolling() {
       if (d.status === 'question' && d.aku && d.aku.sudah) terkirim = true;
       render(); chip.classList.add('hide');
     } catch (e) {
-      chip.classList.remove('hide'); chip.textContent = 'terputus…';
+      chip.classList.remove('hide');
+      const t = String(e.message || '');
+      if (/tidak ditemukan|404/i.test(t)) { chip.textContent = 'kode kuis tidak aktif'; }
+      else { chip.textContent = 'terputus… — cek sinyal'; }
     }
   };
   tarik(); poll = setInterval(tarik, 2500);
@@ -354,6 +377,24 @@ function stopPolling() {
 }
 
 function kirimUlang() { if (sock && sock.open) sock.send('quiz:join', { nama, pid }); }
+$('#kirimKetik').addEventListener('click', () => {
+  const v = String($('#ketikJawab').value || '').trim().toUpperCase();
+  const ada = (st && st.question && (st.question.options || []).some((o) => o.id === v));
+  if (!ada) { toast('Tulis A, B, C, atau D.', true); return; }
+  $('#ketikJawab').value = '';
+  kirim(v);
+});
+$('#ketikJawab').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('#kirimKetik').click(); } });
+$('#opsi').addEventListener('pointerdown', (e) => {
+  const b = e.target && e.target.closest ? e.target.closest('.opt[data-opt]') : null;
+  if (!b) return;
+  document.querySelectorAll('#opsi .opt').forEach((x) => x.classList.remove('pilih'));
+  b.classList.add('pilih');                       // umpan balik langsung, walau jaringan lambat
+}, { passive: true });
+$('#opsi').addEventListener('pointerup', (e) => {
+  const b = e.target && e.target.closest ? e.target.closest('.opt[data-opt]') : null;
+  if (b) { e.preventDefault(); kirim(b.dataset.opt); }
+}, { passive: false });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   if (sock) sock.reopen();
