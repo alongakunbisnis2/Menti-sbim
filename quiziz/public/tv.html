@@ -22,6 +22,9 @@
   .qrbox img{display:block;width:min(34vh,320px);height:auto}
   .hasilrow{display:flex;align-items:center;gap:12px;padding:8px 12px;border-top:1px solid rgba(233,242,250,.14)}
   .hasilrow:first-child{border-top:none}
+  .hasilgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 22px}
+  .hasilgrid .hasilrow{padding:5px 10px;font-size:clamp(13px,1.15vw,19px)}
+  .hasilgrid .hasilrow b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body class="tv">
@@ -110,12 +113,12 @@ function render() {
     $('#panggung').innerHTML = `
       <div class="center">
         <div class="eyebrow">Hasil akhir</div>
-        <h1 class="disp" style="margin:6px 0 18px;font-size:clamp(28px,4vw,48px)">Top 8 — ${esc(st.judul)}</h1>
+        <h1 class="disp" style="margin:6px 0 18px;font-size:clamp(28px,4vw,48px)">Top 20 — ${esc(st.judul)}</h1>
         <div class="podium">${[t[1], t[0], t[2]].filter(Boolean).map((r) => `
           <div class="pod p${r.rank}"><div class="place">#${r.rank}</div>
           <div class="who">${esc(r.name)}</div><div class="pts">${esc(rupiah(r.score))}</div></div>`).join('')}</div>
-        <div class="card" style="margin-top:16px;max-width:760px;margin-left:auto;margin-right:auto;text-align:left">
-          ${(st.top || []).slice(3, 8).map((r) => `<div class="hasilrow">
+        <div class="card hasilgrid" style="margin-top:14px;max-width:1100px;margin-left:auto;margin-right:auto;text-align:left">
+          ${(st.top || []).slice(3, 20).map((r) => `<div class="hasilrow">
             <span class="mono" style="width:34px">#${r.rank}</span>
             <b style="flex:1">${esc(r.name)}</b>
             <span class="mono">${esc(rupiah(r.score))}</span></div>`).join('') || '<div class="small muted">Belum ada peserta.</div>'}
