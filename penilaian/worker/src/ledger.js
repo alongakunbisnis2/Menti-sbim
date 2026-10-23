@@ -121,7 +121,7 @@ export class Ledger {
       const orang = this.pesertaDari(nama, N.potong(body.kelompok, 30));
       if (!orang) return j({ error: "Nama tidak valid." }, 400);
       const keg = N.potong(body.kegiatan, 60) || "Umum";
-      this.sql().exec("INSERT INTO kegiatan(sesi,nama,urut) VALUES(?,?,?)", sesi, keg, 999);
+      this.sql().exec("INSERT OR IGNORE INTO kegiatan(sesi,nama,urut) VALUES(?,?,?)", sesi, keg, 999);
       this.sql().exec("INSERT INTO entri(pid,sesi,kegiatan,poin,catatan,oleh,at) VALUES(?,?,?,?,?,?,?)",
         orang.id, sesi, keg, pv.poin, N.potong(body.catatan, 120), N.potong(body.oleh, 24) || "panitia", Date.now());
       const id = this.sql().exec("SELECT last_insert_rowid() id").toArray()[0].id;
