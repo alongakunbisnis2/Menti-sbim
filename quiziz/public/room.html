@@ -103,6 +103,7 @@
       <div class="eyebrow">Kuis selesai</div>
       <div class="big" id="angkaAkhir">—</div>
       <p class="muted" id="kataAkhir">Lihat layar utama untuk papan skor.</p>
+      <div id="papan" class="card" style="margin:14px 0 4px;text-align:left"></div>
       <div class="row" style="justify-content:center">
         <a class="btn btn-ghost" href="/">Selesai</a>
       </div>
@@ -236,6 +237,19 @@ function render() {
     tampil('panelAkhir');
     const skor = hasil ? hasil.score : total;
     $('#angkaAkhir').textContent = rupiah(skor);
+    const top = (st.top || []).slice(0, 8);
+    const baris = top.map((r) => ({ ...r, aku: r.pid === pid }));
+    const akuDi = top.findIndex((r) => r.pid === pid);
+    let html = baris.map((r) => `<div class="hasilrow" style="display:flex;gap:10px;align-items:center;padding:7px 0;border-top:1px solid rgba(8,43,69,.12)${r.aku ? ';font-weight:700' : ''}">
+        <span class="mono" style="width:28px">${r.rank}</span>
+        <span style="flex:1">${esc(r.name)}${r.aku ? ' <span class="tag yellow" style="font-size:9px">kamu</span>' : ''}</span>
+        <span class="mono">${esc(rupiah(r.score))}</span></div>`).join('');
+    if (akuDi < 0) {
+      const r = (hasil && hasil.rank) ? { rank: hasil.rank, score: hasil.score } : null;
+      if (r) html += `<div class="hasilrow" style="display:flex;gap:10px;align-items:center;padding:7px 0;border-top:1px solid rgba(8,43,69,.12);font-weight:700">
+        <span class="mono" style="width:28px">${r.rank}</span><span style="flex:1">${esc(nama)} <span class="tag yellow" style="font-size:9px">kamu</span></span><span class="mono">${esc(rupiah(r.score))}</span></div>`;
+    }
+    $('#papan').innerHTML = '<div class="eyebrow" style="margin-bottom:6px">Papan skor — Top 8</div>' + (html || '<div class="small muted">Belum ada peserta.</div>');
     $('#kataAkhir').textContent = hasil && hasil.rank
       ? `Peringkat ${hasil.rank} dari ${hasil.total} peserta · ${hasil.benar} jawaban benar. Lihat layar utama untuk papan skor.`
       : `${rupiah(total)} poin terkumpul. Lihat layar utama untuk papan skor.`;
