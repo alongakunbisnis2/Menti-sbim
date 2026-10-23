@@ -168,6 +168,14 @@ export class Ledger {
       return j({ ok: true });
     }
 
+    if (p === "/bersih" && m === "POST") {
+      const n0 = this.sql().exec("SELECT COUNT(*) n FROM peserta").toArray()[0].n;
+      this.sql().exec("DELETE FROM peserta WHERE id NOT IN (SELECT pid FROM entri)");
+      const n1 = this.sql().exec("SELECT COUNT(*) n FROM peserta").toArray()[0].n;
+      this.siar();
+      return j({ ok: true, dihapus: Number(n0) - Number(n1), peserta: Number(n1) });
+    }
+
     if (p === "/reset" && m === "POST") {
       if (String(body.konfirmasi || "") !== "HAPUS SEMUA") return j({ error: "Tulis konfirmasi: HAPUS SEMUA" }, 400);
       this.sql().exec("DELETE FROM entri"); this.sql().exec("DELETE FROM peserta"); this.sql().exec("DELETE FROM kegiatan");

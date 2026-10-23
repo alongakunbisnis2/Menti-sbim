@@ -70,6 +70,10 @@ async function api(req, env, url) {
     }));
   }
 
+  if (p === "/api/bersih" && m === "POST") return terus(await stub(env).fetch("https://do/bersih", {
+    method: "POST", headers: { "content-type": "application/json", "x-pin": pin }, body: "{}"
+  }));
+
   if (p === "/api/reset" && m === "POST") {
     const b = await req.json().catch(() => ({}));
     return terus(await stub(env).fetch("https://do/reset", {
